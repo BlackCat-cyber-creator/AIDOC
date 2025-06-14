@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 208 100% 97%; /* #F0F8FF - Light desaturated blue */
+    --foreground: 0 0% 3.9%; /* Default dark gray for text */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 206 70% 62%; /* #5DADE2 - Calming blue */
+    --primary-foreground: 0 0% 100%; /* White for text on primary */
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 165 56% 74%; /* #A3E4D7 - Muted green */
+    --accent-foreground: 165 40% 25%; /* Darker green/teal for text on accent */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 206 70% 62%; /* Using primary color for ring */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 206 70% 62%; /* Keep primary blue for dark mode too */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 165 56% 74%; /* Keep accent green for dark mode */
+    --accent-foreground: 165 40% 25%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 206 70% 62%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-body min-h-screen antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline text-foreground font-semibold;
+  }
+  h1 { @apply text-3xl md:text-4xl mb-4; }
+  h2 { @apply text-2xl md:text-3xl mb-3; }
+  h3 { @apply text-xl md:text-2xl mb-2; }
+  h4 { @apply text-lg md:text-xl mb-2; }
+}
+
+@layer components {
+  button, [type="button"], [type="submit"], [type="reset"] {
+    @apply transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+  .card, .shadow-lg, .rounded-lg {
+    @apply transition-shadow duration-200 hover:shadow-xl hover:scale-[1.02];
+  }
+  input, select, textarea {
+    @apply transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+  a {
+    @apply text-primary transition-colors duration-150 hover:text-accent;
+  }
+}
+
+.accent {
+  @apply text-[#A3E4D7] bg-[#A3E4D7]/10 rounded px-1.5;
+}
+
+@media (max-width: 640px) {
+  body {
+    @apply text-base;
+  }
+  h1 { @apply text-2xl; }
+  h2 { @apply text-xl; }
+  h3 { @apply text-lg; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}

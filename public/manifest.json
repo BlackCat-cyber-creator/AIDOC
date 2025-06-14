@@ -1,0 +1,73 @@
+{
+  "name": "Artificial Intelligence Doctor",
+  "short_name": "AIDOC",
+  "description": "AI-powered medical diagnostic assistant",
+  "theme_color": "#5DADE2",
+  "background_color": "#F0F8FF",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/icon-192x192.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 72x72 96x96 128x128 256x256",
+      "type": "image/x-icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Diagnosis",
+      "short_name": "New",
+      "description": "Start a new diagnosis",
+      "url": "/?new=1",
+      "icons": [
+        { "src": "/icon-192x192.webp", "sizes": "192x192", "type": "image/webp" },
+        { "src": "/icon-192x192.png", "sizes": "192x192", "type": "image/png" }
+      ]
+    },
+    {
+      "name": "View History",
+      "short_name": "History",
+      "description": "View past diagnoses",
+      "url": "/history",
+      "icons": [
+        { "src": "/icon-192x192.webp", "sizes": "192x192", "type": "image/webp" },
+        { "src": "/icon-192x192.png", "sizes": "192x192", "type": "image/png" }
+      ]
+    }
+  ],
+  "splash_screens": [
+    {
+      "src": "/icon-512x512.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
