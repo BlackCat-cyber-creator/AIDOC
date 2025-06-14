@@ -71,6 +71,11 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Custom Dark Mode Header Gradient Colors */
+    --dark-header-start: 260 80% 15%; /* Deep purple-blue for midnight */
+    --dark-header-middle: 280 70% 30%; /* Starlit purple glow */
+    --dark-header-end: 220 80% 25%; /* Dark neon blue */
   }
 }
 
