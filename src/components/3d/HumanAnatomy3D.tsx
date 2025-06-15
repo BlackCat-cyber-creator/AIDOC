@@ -3,7 +3,17 @@
 import React, { Suspense, useRef, useEffect, useState, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, OrbitControls, Html } from '@react-three/drei';
-import { Box3, Vector3, AnimationMixer, PerspectiveCamera, Mesh, MeshStandardMaterial, SphereGeometry, Group, Object3D } from 'three';
+import {
+  Box3,
+  Vector3,
+  AnimationMixer,
+  PerspectiveCamera,
+  Mesh,
+  MeshStandardMaterial,
+  SphereGeometry,
+  Group,
+  Object3D,
+} from 'three';
 
 interface HumanAnatomy3DProps {
   selectedSex: 'male' | 'female' | 'other';
@@ -43,23 +53,23 @@ const maleBodyRegions: BodyPart[] = [
 ];
 
 const femaleBodyRegions: BodyPart[] = [
-    // General regions (unisex)
-    { id: 'head', label: 'Head', center: [0, 1.65, 0], radius: 0.11 },
-    { id: 'neck', label: 'Neck', center: [0, 1.5, -0.01], radius: 0.07 },
-    { id: 'chest', label: 'Chest', center: [0, 1.35, 0.03], radius: 0.14 },
-    { id: 'abdomen', label: 'Abdomen', center: [0, 1.1, 0.08], radius: 0.13 },
-    { id: 'pelvis', label: 'Pelvis', center: [0, 1, 0], radius: 0.16 },
-    { id: 'left-shoulder', label: 'L. Shoulder', center: [0.22, 1.4, 0], radius: 0.12 },
-    { id: 'right-shoulder', label: 'R. Shoulder', center: [-0.22, 1.4, 0], radius: 0.12 },
-    { id: 'left-arm', label: 'L. Arm', center: [0.5, 1.4, 0], radius: 0.15 },
-    { id: 'right-arm', label: 'R. Arm', center: [-0.5, 1.4, 0], radius: 0.15 },
-    { id: 'left-hand', label: 'L. Hand', center: [0.75, 1.4, 0], radius: 0.08 },
-    { id: 'right-hand', label: 'R. Hand', center: [-0.75, 1.4, 0], radius: 0.08 },
-    { id: 'left-leg', label: 'L. Leg', center: [0.15, 0.4, 0], radius: 0.15 },
-    { id: 'right-leg', label: 'R. Leg', center: [-0.15, 0.4, 0], radius: 0.15 },
-    { id: 'left-foot', label: 'L. Foot', center: [0.1, 0.1, 0.03], radius: 0.08 },
-    { id: 'right-foot', label: 'R. Foot', center: [-0.1, 0.1, 0.03], radius: 0.08 },
-    { id: 'back', label: 'Back', center: [0, 1.25, -0.1], radius: 0.18 }, // Slightly behind for back
+  // General regions (unisex)
+  { id: 'head', label: 'Head', center: [0, 1.65, 0], radius: 0.11 },
+  { id: 'neck', label: 'Neck', center: [0, 1.5, -0.01], radius: 0.07 },
+  { id: 'chest', label: 'Chest', center: [0, 1.35, 0.03], radius: 0.14 },
+  { id: 'abdomen', label: 'Abdomen', center: [0, 1.1, 0.08], radius: 0.13 },
+  { id: 'pelvis', label: 'Pelvis', center: [0, 1, 0], radius: 0.16 },
+  { id: 'left-shoulder', label: 'L. Shoulder', center: [0.22, 1.4, 0], radius: 0.12 },
+  { id: 'right-shoulder', label: 'R. Shoulder', center: [-0.22, 1.4, 0], radius: 0.12 },
+  { id: 'left-arm', label: 'L. Arm', center: [0.5, 1.4, 0], radius: 0.15 },
+  { id: 'right-arm', label: 'R. Arm', center: [-0.5, 1.4, 0], radius: 0.15 },
+  { id: 'left-hand', label: 'L. Hand', center: [0.75, 1.4, 0], radius: 0.08 },
+  { id: 'right-hand', label: 'R. Hand', center: [-0.75, 1.4, 0], radius: 0.08 },
+  { id: 'left-leg', label: 'L. Leg', center: [0.15, 0.4, 0], radius: 0.15 },
+  { id: 'right-leg', label: 'R. Leg', center: [-0.15, 0.4, 0], radius: 0.15 },
+  { id: 'left-foot', label: 'L. Foot', center: [0.1, 0.1, 0.03], radius: 0.08 },
+  { id: 'right-foot', label: 'R. Foot', center: [-0.1, 0.1, 0.03], radius: 0.08 },
+  { id: 'back', label: 'Back', center: [0, 1.25, -0.1], radius: 0.18 }, // Slightly behind for back
   { id: 'breast', label: 'Breast', center: [0, 1.3, 0.13], radius: 0.1, sex: 'female' },
   { id: 'genitals-female', label: 'Genitals (Female)', center: [0, 0.85, 0], radius: 0.08, sex: 'female' },
 ];
@@ -124,13 +134,13 @@ function AnatomyModel({
 
         // Calculate camera distance to fit the entire model
         const objectSize = Math.max(sizeVec.x, sizeVec.y, sizeVec.z);
-        const fovRad = Math.PI * camera.fov / 360;
-        let distance = (objectSize / 2) / Math.tan(fovRad);
-        
+        const fovRad = (Math.PI * camera.fov) / 360;
+        let distance = objectSize / 2 / Math.tan(fovRad);
+
         // Adjust distance for aspect ratio if necessary, prioritizing vertical fit
         const aspectRatio = size.width / size.height;
         if (sizeVec.x / aspectRatio > sizeVec.y) {
-          distance = (sizeVec.x / (2 * aspectRatio)) / Math.tan(fovRad);
+          distance = sizeVec.x / (2 * aspectRatio) / Math.tan(fovRad);
         }
 
         distance *= 1.6; // Add padding to the distance for better framing
@@ -181,7 +191,7 @@ function AnatomyModel({
       const intersectionPoint = intersects[0].point;
 
       // Determine which body region was clicked based on coordinates
-      const clickedRegion = bodyRegions.find(region => {
+      const clickedRegion = bodyRegions.find((region) => {
         const regionCenter = new Vector3(...region.center);
         return intersectionPoint.distanceTo(regionCenter) < region.radius;
       });
@@ -216,9 +226,7 @@ export function HumanAnatomy3D({
   const currentBodyRegions = selectedSex === 'male' ? maleBodyRegions : femaleBodyRegions;
 
   // Filter body regions based on selected sex (this will now filter the currentBodyRegions)
-  const filteredBodyRegions = currentBodyRegions.filter(
-    (region) => !region.sex || region.sex === selectedSex
-  );
+  const filteredBodyRegions = currentBodyRegions.filter((region) => !region.sex || region.sex === selectedSex);
 
   const [initialCameraTarget, setInitialCameraTarget] = useState<Vector3 | null>(null);
 
@@ -227,10 +235,12 @@ export function HumanAnatomy3D({
   }, []);
 
   return (
-    <div className="w-full h-[500px] flex items-center justify-center relative">
+    <div className="w-full h-[400px] md:h-[500px] flex items-center justify-center relative">
       <Canvas
         camera={{ fov: 90 }}
-        onPointerMissed={() => { /* Handle clicks outside model if needed */ }}
+        onPointerMissed={() => {
+          /* Handle clicks outside model if needed */
+        }}
       >
         <ambientLight intensity={0.8} />
         <directionalLight position={[0, 0, 5]} intensity={1} />
@@ -249,11 +259,11 @@ export function HumanAnatomy3D({
             />
           </group>
           {initialCameraTarget && (
-            <OrbitControls 
-              enableZoom={false} 
-              enablePan={false} 
-              minPolarAngle={Math.PI / 2} 
-              maxPolarAngle={Math.PI / 2} 
+            <OrbitControls
+              enableZoom={false}
+              enablePan={false}
+              minPolarAngle={Math.PI / 2}
+              maxPolarAngle={Math.PI / 2}
               target={initialCameraTarget}
             />
           )}
@@ -288,7 +298,7 @@ export function HumanAnatomy3D({
                 position={[part.center[0], part.center[1] - 1.0 + 0.1, part.center[2]]}
                 center
                 style={{ pointerEvents: 'auto', cursor: 'pointer' }}
-                className={`text-[0.4rem] font-semibold px-2 py-1 rounded-full whitespace-nowrap select-none
+                className={`text-[0.4rem] font-semibold px-2 py-1 rounded-md whitespace-nowrap select-none
                   ${isSelected ? 'bg-blue-500 text-white' : 'bg-gray-700 text-white bg-opacity-70'}
                 `}
                 onClick={(e) => {
@@ -296,9 +306,7 @@ export function HumanAnatomy3D({
                   if (!disabled) onLocationToggle(part.id);
                 }}
               >
-                <div className="relative">
-                  {part.label}
-                </div>
+                <div className="relative">{part.label}</div>
               </Html>
             );
           })}
@@ -306,4 +314,4 @@ export function HumanAnatomy3D({
       </Canvas>
     </div>
   );
-} 
+}
