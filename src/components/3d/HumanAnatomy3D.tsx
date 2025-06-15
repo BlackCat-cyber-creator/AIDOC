@@ -301,12 +301,16 @@ export function HumanAnatomy3D({
                 className={`text-[0.2rem] sm:text-[0.3rem] md:text-[0.4rem] font-semibold px-1 py-0 rounded-md whitespace-nowrap select-none w-max leading-none
                   ${isSelected ? 'bg-blue-500 text-white' : 'bg-gray-700 text-white bg-opacity-70'}
                 `}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!disabled) onLocationToggle(part.id);
-                }}
               >
-                <div className="relative">{part.label}</div>
+                <button
+                  className="relative w-full h-full focus:outline-none active:outline-none border-none focus:ring-0 focus:ring-offset-0 shadow-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!disabled) onLocationToggle(part.id);
+                  }}
+                >
+                  {part.label}
+                </button>
               </Html>
             );
           })}
