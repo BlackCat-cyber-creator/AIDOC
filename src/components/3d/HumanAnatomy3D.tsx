@@ -235,7 +235,7 @@ export function HumanAnatomy3D({
   }, []);
 
   return (
-    <div className="w-full h-[400px] md:h-[500px] flex items-center justify-center relative">
+    <div className="w-full h-[350px] md:h-[500px] flex items-center justify-center relative">
       <Canvas
         camera={{ fov: 90 }}
         onPointerMissed={() => {
@@ -298,7 +298,7 @@ export function HumanAnatomy3D({
                 position={[part.center[0], part.center[1] - 1.0 + 0.1, part.center[2]]}
                 center
                 style={{ pointerEvents: 'auto', cursor: 'pointer' }}
-                className={`text-[0.4rem] font-semibold px-2 py-1 rounded-md whitespace-nowrap select-none
+                className={`text-[0.2rem] sm:text-[0.3rem] md:text-[0.4rem] font-semibold px-1 py-0 rounded-md whitespace-nowrap select-none w-max leading-none
                   ${isSelected ? 'bg-blue-500 text-white' : 'bg-gray-700 text-white bg-opacity-70'}
                 `}
                 onClick={(e) => {
