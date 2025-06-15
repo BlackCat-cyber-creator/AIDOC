@@ -23,12 +23,13 @@
       "src": "/icon-512x512.webp",
       "sizes": "512x512",
       "type": "image/webp",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/favicon.ico",

@@ -799,45 +799,58 @@ const sortedSimplifiedSymptomTypes = [
   { value: 'weakness-muscle', label: 'Weakness (Muscle)' },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
-const commonLocationsForAllSymptoms = sortedAllSymptomLocations.map((loc) => loc.value);
-
 const regionIds3D = [
-  'head', 'neck', 'chest', 'abdomen', 'pelvis',
-  'left-shoulder', 'right-shoulder', 'left-arm', 'right-arm',
-  'left-hand', 'right-hand', 'left-leg', 'right-leg',
-  'left-foot', 'right-foot', 'back', 'breast', 'genitals-male', 'genitals-female'
+  'head',
+  'neck',
+  'chest',
+  'abdomen',
+  'pelvis',
+  'left-shoulder',
+  'right-shoulder',
+  'left-arm',
+  'right-arm',
+  'left-hand',
+  'right-hand',
+  'left-leg',
+  'right-leg',
+  'left-foot',
+  'right-foot',
+  'back',
+  'breast',
+  'genitals-male',
+  'genitals-female',
 ];
 
 const symptomTypeToLocationMapping: Record<string, string[]> = {
   'abdominal-pain-discomfort': ['abdomen', 'pelvis'],
   'anxiety-new-worsening': [],
-  'bleeding': regionIds3D,
+  bleeding: regionIds3D,
   'bruising-unexplained': regionIds3D,
-  'chills': [],
+  chills: [],
   'confusion-disorientation': ['head'],
-  'constipation': ['abdomen', 'pelvis'],
-  'cough': ['chest', 'neck'],
+  constipation: ['abdomen', 'pelvis'],
+  cough: ['chest', 'neck'],
   'depression-new-worsening': [],
-  'diarrhea': ['abdomen', 'pelvis'],
+  diarrhea: ['abdomen', 'pelvis'],
   'discharge-abnormal': ['breast', 'genitals-male', 'genitals-female'],
-  'dizziness': ['head'],
+  dizziness: ['head'],
   'ear-pain-or-discharge': [],
   'eye-pain-or-redness': [],
   'fainting-syncope': ['head'],
   'fatigue-extreme': [],
-  'fever': [],
+  fever: [],
   'hearing-loss-new': [],
   'irritability-agitation-unusual': [],
   'itching-persistent': regionIds3D,
-  'lightheadedness': ['head'],
+  lightheadedness: ['head'],
   'lump-mass-new': regionIds3D,
   'malaise-general-unwellness': [],
   'memory-problems-new': ['head'],
-  'nausea': ['abdomen'],
-  'numbness': regionIds3D,
+  nausea: ['abdomen'],
+  numbness: regionIds3D,
   'other-symptom': regionIds3D,
   'pain-ache': regionIds3D,
-  'rash': regionIds3D,
+  rash: regionIds3D,
   'shortness-of-breath': ['chest', 'neck'],
   'skin-discoloration-new': regionIds3D,
   'skin-lesion-new': regionIds3D,
@@ -848,7 +861,7 @@ const symptomTypeToLocationMapping: Record<string, string[]> = {
   'urinary-issues': ['abdomen', 'pelvis', 'genitals-male', 'genitals-female'],
   'vision-blurred-double': [],
   'vision-loss-partial-complete': [],
-  'vomiting': ['abdomen'],
+  vomiting: ['abdomen'],
   'weakness-muscle': regionIds3D,
 };
 
@@ -1008,8 +1021,8 @@ export function DiagnosisForm({
 
   const filteredSymptomTypesForDropdown = React.useMemo(() => {
     if (!selectedLocations || selectedLocations.length === 0) {
-        return sortedSimplifiedSymptomTypes;
-      }
+      return sortedSimplifiedSymptomTypes;
+    }
     const displayableSymptomTypeValues = new Set<string>();
     sortedSimplifiedSymptomTypes.forEach((st) => {
       const allowedRegions = symptomTypeToLocationMapping[st.value] || [];
