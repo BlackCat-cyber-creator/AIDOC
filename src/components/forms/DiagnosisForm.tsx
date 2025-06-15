@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { CircleCheck, CircleX } from 'lucide-react';
+import { HumanAnatomy3D } from '@/components/3d/HumanAnatomy3D';
 
 // --- SVG Icons for Age ---
 const InfantFaceIcon = () => (
@@ -106,19 +107,20 @@ const OlderAdultFaceIcon = () => (
 
 const getAgeIconAndLabel = (
   ageInput: number | string | undefined
-): { IconComponent: React.ElementType; label: string } => {
+): { IconComponent: React.FC<object>; label: string } => {
   const numericAge =
     typeof ageInput === 'string' ? parseInt(ageInput, 10) : typeof ageInput === 'number' ? ageInput : 30;
 
-  let IconComponent: React.ElementType = YoungAdultFaceIcon;
-  if (numericAge === 0) IconComponent = InfantFaceIcon;
-  else if (numericAge >= 1 && numericAge <= 3) IconComponent = ToddlerFaceIcon;
-  else if (numericAge >= 4 && numericAge <= 5) IconComponent = PreschoolFaceIcon;
-  else if (numericAge >= 6 && numericAge <= 12) IconComponent = SchoolAgeFaceIcon;
-  else if (numericAge >= 13 && numericAge <= 18) IconComponent = AdolescentFaceIcon;
-  else if (numericAge >= 19 && numericAge <= 40) IconComponent = YoungAdultFaceIcon;
-  else if (numericAge >= 41 && numericAge <= 64) IconComponent = MiddleAgeAdultFaceIcon;
-  else if (numericAge >= 65) IconComponent = OlderAdultFaceIcon;
+  let IconComponent: React.FC<object>; // Declared once here
+  if (numericAge === 0) IconComponent = InfantFaceIcon as React.FC<object>;
+  else if (numericAge >= 1 && numericAge <= 3) IconComponent = ToddlerFaceIcon as React.FC<object>;
+  else if (numericAge >= 4 && numericAge <= 5) IconComponent = PreschoolFaceIcon as React.FC<object>;
+  else if (numericAge >= 6 && numericAge <= 12) IconComponent = SchoolAgeFaceIcon as React.FC<object>;
+  else if (numericAge >= 13 && numericAge <= 18) IconComponent = AdolescentFaceIcon as React.FC<object>;
+  else if (numericAge >= 19 && numericAge <= 40) IconComponent = YoungAdultFaceIcon as React.FC<object>;
+  else if (numericAge >= 41 && numericAge <= 64) IconComponent = MiddleAgeAdultFaceIcon as React.FC<object>;
+  else if (numericAge >= 65) IconComponent = OlderAdultFaceIcon as React.FC<object>;
+  else IconComponent = YoungAdultFaceIcon as React.FC<object>; // Default assignment to avoid unassigned error
 
   let labelText = `${numericAge}`;
   if (numericAge >= 65) {
@@ -799,121 +801,55 @@ const sortedSimplifiedSymptomTypes = [
 
 const commonLocationsForAllSymptoms = sortedAllSymptomLocations.map((loc) => loc.value);
 
+const regionIds3D = [
+  'head', 'neck', 'chest', 'abdomen', 'pelvis',
+  'left-shoulder', 'right-shoulder', 'left-arm', 'right-arm',
+  'left-hand', 'right-hand', 'left-leg', 'right-leg',
+  'left-foot', 'right-foot', 'back', 'breast', 'genitals-male', 'genitals-female'
+];
+
 const symptomTypeToLocationMapping: Record<string, string[]> = {
-  'abdominal-pain-discomfort': ['upper-abdomen', 'lower-abdomen', 'pelvis-anterior'],
-  'anxiety-new-worsening': ['whole-body'],
-  bleeding: commonLocationsForAllSymptoms,
-  'bruising-unexplained': commonLocationsForAllSymptoms,
-  chills: ['whole-body', 'skin'],
-  'confusion-disorientation': ['scalp', 'forehead', 'whole-body'],
-  constipation: ['lower-abdomen', 'pelvis-anterior', 'whole-body'],
-  cough: ['upper-chest', 'lower-chest', 'neck-anterior', 'mouth-throat', 'whole-body'],
-  'depression-new-worsening': ['whole-body'],
-  diarrhea: ['lower-abdomen', 'pelvis-anterior', 'whole-body'],
-  'discharge-abnormal': [
-    'left-eye',
-    'right-eye',
-    'left-ear',
-    'right-ear',
-    'nose',
-    'mouth-throat',
-    'genitals-male',
-    'genitals-female',
-    'skin',
-    'upper-chest',
-    'left-buttock',
-    'right-buttock',
-  ],
-  dizziness: ['scalp', 'forehead', 'left-ear', 'right-ear', 'left-eye', 'right-eye', 'whole-body'],
-  'ear-pain-or-discharge': ['left-ear', 'right-ear'],
-  'eye-pain-or-redness': ['left-eye', 'right-eye'],
-  'fainting-syncope': ['scalp', 'forehead', 'whole-body'],
-  'fatigue-extreme': ['whole-body'],
-  fever: ['whole-body', 'skin', 'scalp', 'forehead'],
-  'hearing-loss-new': ['left-ear', 'right-ear'],
-  'irritability-agitation-unusual': ['whole-body'],
-  'itching-persistent': commonLocationsForAllSymptoms.filter(
-    (loc) =>
-      ![
-        'left-knee',
-        'right-knee',
-        'left-elbow',
-        'right-elbow',
-        'left-ankle',
-        'right-ankle',
-        'left-wrist',
-        'right-wrist',
-        'joints',
-      ].includes(loc)
-  ),
-  lightheadedness: ['scalp', 'forehead', 'left-ear', 'right-ear', 'left-eye', 'right-eye', 'whole-body'],
-  'lump-mass-new': commonLocationsForAllSymptoms,
-  'malaise-general-unwellness': ['whole-body'],
-  'memory-problems-new': ['scalp', 'forehead', 'whole-body'],
-  nausea: ['upper-abdomen', 'lower-abdomen', 'mouth-throat', 'whole-body'],
-  numbness: commonLocationsForAllSymptoms,
-  'other-symptom': commonLocationsForAllSymptoms,
-  'pain-ache': commonLocationsForAllSymptoms,
-  rash: commonLocationsForAllSymptoms.filter(
-    (loc) =>
-      ![
-        'left-knee',
-        'right-knee',
-        'left-elbow',
-        'right-elbow',
-        'left-ankle',
-        'right-ankle',
-        'left-wrist',
-        'right-wrist',
-        'joints',
-      ].includes(loc)
-  ),
-  'shortness-of-breath': ['upper-chest', 'lower-chest', 'neck-anterior', 'whole-body'],
-  'skin-discoloration-new': commonLocationsForAllSymptoms.filter(
-    (loc) =>
-      ![
-        'left-knee',
-        'right-knee',
-        'left-elbow',
-        'right-elbow',
-        'left-ankle',
-        'right-ankle',
-        'left-wrist',
-        'right-wrist',
-        'joints',
-      ].includes(loc)
-  ),
-  'skin-lesion-new': commonLocationsForAllSymptoms.filter(
-    (loc) =>
-      ![
-        'left-knee',
-        'right-knee',
-        'left-elbow',
-        'right-elbow',
-        'left-ankle',
-        'right-ankle',
-        'left-wrist',
-        'right-wrist',
-        'joints',
-      ].includes(loc)
-  ),
-  'sweats-excessive': ['whole-body', 'skin'],
-  'swelling-edema': commonLocationsForAllSymptoms,
-  'tingling-pins-needles': commonLocationsForAllSymptoms,
-  'tinnitus-ringing-ears': ['left-ear', 'right-ear'],
-  'urinary-issues': [
-    'lower-abdomen',
-    'pelvis-anterior',
-    'genitals-male',
-    'genitals-female',
-    'lower-back',
-    'left-groin',
-    'right-groin',
-  ],
-  'vision-blurred-double': ['left-eye', 'right-eye'],
-  'vision-loss-partial-complete': ['left-eye', 'right-eye'],
-  vomiting: ['upper-abdomen', 'lower-abdomen', 'mouth-throat', 'whole-body'],
-  'weakness-muscle': commonLocationsForAllSymptoms,
+  'abdominal-pain-discomfort': ['abdomen', 'pelvis'],
+  'anxiety-new-worsening': [],
+  'bleeding': regionIds3D,
+  'bruising-unexplained': regionIds3D,
+  'chills': [],
+  'confusion-disorientation': ['head'],
+  'constipation': ['abdomen', 'pelvis'],
+  'cough': ['chest', 'neck'],
+  'depression-new-worsening': [],
+  'diarrhea': ['abdomen', 'pelvis'],
+  'discharge-abnormal': ['breast', 'genitals-male', 'genitals-female'],
+  'dizziness': ['head'],
+  'ear-pain-or-discharge': [],
+  'eye-pain-or-redness': [],
+  'fainting-syncope': ['head'],
+  'fatigue-extreme': [],
+  'fever': [],
+  'hearing-loss-new': [],
+  'irritability-agitation-unusual': [],
+  'itching-persistent': regionIds3D,
+  'lightheadedness': ['head'],
+  'lump-mass-new': regionIds3D,
+  'malaise-general-unwellness': [],
+  'memory-problems-new': ['head'],
+  'nausea': ['abdomen'],
+  'numbness': regionIds3D,
+  'other-symptom': regionIds3D,
+  'pain-ache': regionIds3D,
+  'rash': regionIds3D,
+  'shortness-of-breath': ['chest', 'neck'],
+  'skin-discoloration-new': regionIds3D,
+  'skin-lesion-new': regionIds3D,
+  'sweats-excessive': [],
+  'swelling-edema': regionIds3D,
+  'tingling-pins-needles': regionIds3D,
+  'tinnitus-ringing-ears': [],
+  'urinary-issues': ['abdomen', 'pelvis', 'genitals-male', 'genitals-female'],
+  'vision-blurred-double': [],
+  'vision-loss-partial-complete': [],
+  'vomiting': ['abdomen'],
+  'weakness-muscle': regionIds3D,
 };
 
 const commonChronicConditions = [
@@ -1013,259 +949,7 @@ const commonAllergies = [
   'Flu Shot',
 ].sort();
 
-const nonAnatomyLocationOptions = [{ value: 'skin', label: 'Skin (General / Multiple Areas)' }];
-
-interface HumanAnatomySelectorProps {
-  selectedLocations: string[];
-  onLocationToggle: (locationValue: string) => void;
-  selectedSex?: 'male' | 'female' | 'other';
-  disabled?: boolean;
-}
-
-const HumanAnatomySelector: React.FC<HumanAnatomySelectorProps> = ({
-  selectedLocations,
-  onLocationToggle,
-  selectedSex,
-  disabled = false,
-}) => {
-  const baseFill = 'hsl(var(--muted))';
-  const selectedFill = 'hsl(var(--primary))';
-  const hoverFillBase = 'hsl(var(--primary))';
-
-  const baseStroke = 'hsl(var(--border))';
-  const selectedStroke = 'hsl(var(--primary))';
-
-  const textFillColor = 'hsl(var(--foreground))';
-  const selectedTextFillColor = 'hsl(var(--primary-foreground))';
-
-  return (
-    <svg
-      viewBox="0 0 250 450"
-      className={cn('mx-auto w-full max-w-md', disabled && 'cursor-not-allowed opacity-50')}
-      aria-label="Human anatomy model for symptom location selection"
-      aria-describedby="anatomy-desc"
-    >
-      <title>Interactive Human Anatomy Model</title>
-      <desc id="anatomy-desc">Click on body parts to select symptom locations.</desc>
-      {anatomyParts.map((part) => {
-        if (part.sex && part.sex !== selectedSex && selectedSex !== 'other') {
-          return null;
-        }
-
-        const isSelected = selectedLocations.includes(part.id);
-        const baseOpacity = part.props.opacity !== undefined ? part.props.opacity : 0.3;
-        const currentFill = isSelected ? selectedFill : baseFill;
-        const currentOpacity = isSelected ? 1.0 : baseOpacity;
-        const currentStroke = isSelected ? selectedStroke : baseStroke;
-        const currentStrokeWidth = isSelected ? 1.5 : 1;
-
-        let svgElement = null;
-        switch (part.shape) {
-          case 'rect':
-            svgElement = (
-              <rect
-                aria-label={part.label}
-                tabIndex={disabled ? -1 : 0}
-                role="button"
-                aria-pressed={isSelected}
-                {...(part.props as React.SVGProps<SVGRectElement>)}
-                fill={currentFill}
-                stroke={currentStroke}
-                strokeWidth={currentStrokeWidth}
-                className={cn(
-                  'transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                  !disabled && 'cursor-pointer'
-                )}
-                style={{ ...part.props.style, opacity: currentOpacity }}
-                onMouseEnter={(e) => {
-                  if (!disabled) {
-                    const currentTarget = e.currentTarget as SVGElement;
-                    if (!isSelected) {
-                      currentTarget.style.fill = hoverFillBase;
-                      currentTarget.style.opacity = '0.5';
-                      currentTarget.style.stroke = selectedStroke;
-                      currentTarget.style.strokeWidth = '1.5';
-                    }
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!disabled) {
-                    const currentTarget = e.currentTarget as SVGElement;
-                    currentTarget.style.fill = isSelected ? selectedFill : baseFill;
-                    currentTarget.style.opacity = (isSelected ? 1.0 : baseOpacity).toString();
-                    currentTarget.style.stroke = isSelected ? selectedStroke : baseStroke;
-                    currentTarget.style.strokeWidth = (isSelected ? 1.5 : 1).toString();
-                  }
-                }}
-                onClick={() => !disabled && onLocationToggle(part.id)}
-                onKeyDown={(e) => {
-                  if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-                    onLocationToggle(part.id);
-                  }
-                }}
-              />
-            );
-            break;
-          case 'circle':
-            svgElement = (
-              <circle
-                aria-label={part.label}
-                tabIndex={disabled ? -1 : 0}
-                role="button"
-                aria-pressed={isSelected}
-                {...(part.props as React.SVGProps<SVGCircleElement>)}
-                fill={currentFill}
-                stroke={currentStroke}
-                strokeWidth={currentStrokeWidth}
-                className={cn(
-                  'transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                  !disabled && 'cursor-pointer'
-                )}
-                style={{ ...part.props.style, opacity: currentOpacity }}
-                onMouseEnter={(e) => {
-                  if (!disabled) {
-                    const currentTarget = e.currentTarget as SVGElement;
-                    if (!isSelected) {
-                      currentTarget.style.fill = hoverFillBase;
-                      currentTarget.style.opacity = '0.5';
-                      currentTarget.style.stroke = selectedStroke;
-                      currentTarget.style.strokeWidth = '1.5';
-                    }
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!disabled) {
-                    const currentTarget = e.currentTarget as SVGElement;
-                    currentTarget.style.fill = isSelected ? selectedFill : baseFill;
-                    currentTarget.style.opacity = (isSelected ? 1.0 : baseOpacity).toString();
-                    currentTarget.style.stroke = isSelected ? selectedStroke : baseStroke;
-                    currentTarget.style.strokeWidth = (isSelected ? 1.5 : 1).toString();
-                  }
-                }}
-                onClick={() => !disabled && onLocationToggle(part.id)}
-                onKeyDown={(e) => {
-                  if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-                    onLocationToggle(part.id);
-                  }
-                }}
-              />
-            );
-            break;
-          case 'ellipse':
-            svgElement = (
-              <ellipse
-                aria-label={part.label}
-                tabIndex={disabled ? -1 : 0}
-                role="button"
-                aria-pressed={isSelected}
-                {...(part.props as React.SVGProps<SVGEllipseElement>)}
-                fill={currentFill}
-                stroke={currentStroke}
-                strokeWidth={currentStrokeWidth}
-                className={cn(
-                  'transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                  !disabled && 'cursor-pointer'
-                )}
-                style={{ ...part.props.style, opacity: currentOpacity }}
-                onMouseEnter={(e) => {
-                  if (!disabled) {
-                    const currentTarget = e.currentTarget as SVGElement;
-                    if (!isSelected) {
-                      currentTarget.style.fill = hoverFillBase;
-                      currentTarget.style.opacity = '0.5';
-                      currentTarget.style.stroke = selectedStroke;
-                      currentTarget.style.strokeWidth = '1.5';
-                    }
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!disabled) {
-                    const currentTarget = e.currentTarget as SVGElement;
-                    currentTarget.style.fill = isSelected ? selectedFill : baseFill;
-                    currentTarget.style.opacity = (isSelected ? 1.0 : baseOpacity).toString();
-                    currentTarget.style.stroke = isSelected ? selectedStroke : baseStroke;
-                    currentTarget.style.strokeWidth = (isSelected ? 1.5 : 1).toString();
-                  }
-                }}
-                onClick={() => !disabled && onLocationToggle(part.id)}
-                onKeyDown={(e) => {
-                  if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-                    onLocationToggle(part.id);
-                  }
-                }}
-              />
-            );
-            break;
-          case 'path':
-            svgElement = (
-              <path
-                aria-label={part.label}
-                tabIndex={disabled ? -1 : 0}
-                role="button"
-                aria-pressed={isSelected}
-                {...(part.props as React.SVGProps<SVGPathElement>)}
-                fill={currentFill}
-                stroke={currentStroke}
-                strokeWidth={currentStrokeWidth}
-                className={cn(
-                  'transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                  !disabled && 'cursor-pointer'
-                )}
-                style={{ ...part.props.style, opacity: currentOpacity }}
-                onMouseEnter={(e) => {
-                  if (!disabled) {
-                    const currentTarget = e.currentTarget as SVGElement;
-                    if (!isSelected) {
-                      currentTarget.style.fill = hoverFillBase;
-                      currentTarget.style.opacity = '0.5';
-                      currentTarget.style.stroke = selectedStroke;
-                      currentTarget.style.strokeWidth = '1.5';
-                    }
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!disabled) {
-                    const currentTarget = e.currentTarget as SVGElement;
-                    currentTarget.style.fill = isSelected ? selectedFill : baseFill;
-                    currentTarget.style.opacity = (isSelected ? 1.0 : baseOpacity).toString();
-                    currentTarget.style.stroke = isSelected ? selectedStroke : baseStroke;
-                    currentTarget.style.strokeWidth = (isSelected ? 1.5 : 1).toString();
-                  }
-                }}
-                onClick={() => !disabled && onLocationToggle(part.id)}
-                onKeyDown={(e) => {
-                  if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-                    onLocationToggle(part.id);
-                  }
-                }}
-              />
-            );
-            break;
-        }
-        return (
-          <g key={part.id + (part.sex || '')}>
-            {svgElement}
-            {part.shortLabel && (
-              <text
-                x={part.textX}
-                y={part.textY}
-                fontSize="6px"
-                fill={isSelected ? selectedTextFillColor : textFillColor}
-                textAnchor="middle"
-                dominantBaseline="central"
-                pointerEvents="none"
-                className="font-sans"
-                style={{ opacity: isSelected ? 1 : baseOpacity > 0.2 ? 0.9 : 0.7 }}
-              >
-                {part.shortLabel}
-              </text>
-            )}
-          </g>
-        );
-      })}
-    </svg>
-  );
-};
+const nonAnatomyLocationOptions: { value: string; label: string }[] = [];
 
 interface DiagnosisFormProps {
   form: UseFormReturn<FormValues>;
@@ -1324,39 +1008,21 @@ export function DiagnosisForm({
 
   const filteredSymptomTypesForDropdown = React.useMemo(() => {
     if (!selectedLocations || selectedLocations.length === 0) {
-      if (
-        selectedLocations.length === 0 ||
-        selectedLocations.some((sl) => nonAnatomyLocationOptions.map((o) => o.value).includes(sl))
-      ) {
         return sortedSimplifiedSymptomTypes;
       }
-      return [];
-    }
-
     const displayableSymptomTypeValues = new Set<string>();
     sortedSimplifiedSymptomTypes.forEach((st) => {
-      if (st.value === 'other-symptom') {
+      const allowedRegions = symptomTypeToLocationMapping[st.value] || [];
+      if (allowedRegions.length === 0) {
+        // Show if not region-specific
         displayableSymptomTypeValues.add(st.value);
         return;
       }
-      const allowedLocationsForType = symptomTypeToLocationMapping[st.value] || [];
-      const isRelevant = selectedLocations.some(
-        (sl) =>
-          allowedLocationsForType.includes(sl) ||
-          allowedLocationsForType.includes('whole-body') ||
-          allowedLocationsForType.includes('skin') ||
-          allowedLocationsForType.includes('joints')
-      );
-
+      const isRelevant = selectedLocations.some((sl) => allowedRegions.includes(sl));
       if (isRelevant) {
         displayableSymptomTypeValues.add(st.value);
       }
     });
-
-    if (selectedLocations.some((sl) => ['skin', 'joints', 'whole-body'].includes(sl))) {
-      return sortedSimplifiedSymptomTypes;
-    }
-
     return sortedSimplifiedSymptomTypes.filter((st) => displayableSymptomTypeValues.has(st.value));
   }, [selectedLocations]);
 
@@ -1884,7 +1550,7 @@ export function DiagnosisForm({
                     </FormLabel>
                     <FormControl>
                       <div className={cn(!selectedSex && 'opacity-50')}>
-                        <HumanAnatomySelector
+                        <HumanAnatomy3D
                           selectedLocations={field.value || []}
                           onLocationToggle={(locationValue) => {
                             const currentValues = field.value || [];
@@ -1896,47 +1562,39 @@ export function DiagnosisForm({
                           selectedSex={selectedSex}
                           disabled={!selectedSex}
                         />
+                        {/* Checkbox for Skin (General) */}
+                        <FormField
+                          control={form.control}
+                          name="symptoms.location"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-md shadow-sm">
+                              <FormControl>
+                                <Checkbox
+                                  checked={(field.value || []).includes('skin-general')}
+                                  onCheckedChange={(checked) => {
+                                    const currentValues = field.value || [];
+                                    const newValues = checked
+                                      ? [...currentValues, 'skin-general']
+                                      : currentValues.filter((v) => v !== 'skin-general');
+                                    field.onChange(newValues);
+                                  }}
+                                  aria-label="Select Skin (General) as a location"
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>Skin (General)</FormLabel>
+                                <FormDescription>
+                                  Select for symptoms affecting the skin broadly, not a specific anatomical region.
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
                         {!selectedSex && (
                           <p className="mt-2 text-sm text-center text-muted-foreground">
                             Please select a sex in the "Patient Profile" step to enable body part selection.
                           </p>
                         )}
-                        <div className="mt-4 space-y-2">
-                          <FormLabel className="text-sm font-medium">General Locations:</FormLabel>
-                          {nonAnatomyLocationOptions.map((option) => (
-                            <FormItem
-                              key={option.value}
-                              className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3 shadow-sm hover:bg-muted/50 has-[input:checked]:bg-primary/10 has-[input:checked]:border-primary"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  disabled={
-                                    !selectedSex && option.value !== 'whole-body' && option.value !== 'other-location'
-                                  }
-                                  checked={field.value?.includes(option.value)}
-                                  onCheckedChange={(checked) => {
-                                    if (
-                                      !selectedSex &&
-                                      option.value !== 'whole-body' &&
-                                      option.value !== 'other-location'
-                                    )
-                                      return;
-                                    return checked
-                                      ? field.onChange([...(field.value || []), option.value])
-                                      : field.onChange((field.value || []).filter((value) => value !== option.value));
-                                  }}
-                                  id={`location-checkbox-${option.value}`}
-                                />
-                              </FormControl>
-                              <FormLabel
-                                htmlFor={`location-checkbox-${option.value}`}
-                                className="text-sm font-normal text-foreground/80 cursor-pointer flex-1"
-                              >
-                                {option.label}
-                              </FormLabel>
-                            </FormItem>
-                          ))}
-                        </div>
                       </div>
                     </FormControl>
                     <FormMessage />
