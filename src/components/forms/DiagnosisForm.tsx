@@ -28,6 +28,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { CircleCheck, CircleX } from 'lucide-react';
 import { HumanAnatomy3D } from '@/components/3d/HumanAnatomy3D';
+import { AppIcon3D } from '@/components/3d/AppIcon3D';
+import { Suspense } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { useGLTF, OrbitControls } from '@react-three/drei';
+import { AnimationMixer } from 'three';
 
 // --- SVG Icons for Age ---
 const InfantFaceIcon = () => (
@@ -982,6 +987,55 @@ const stepIcons: Record<number, React.ElementType> = {
   3: ClipboardList,
 };
 
+// Add types for SexIcon3D props
+interface SexIcon3DProps {
+  modelPath: string;
+  scale?: number;
+  className?: string;
+  animate?: boolean;
+  position?: [number, number, number];
+}
+
+function SexIcon3D({ modelPath, scale = 1.3, className = "w-36 h-36", animate = false, position = [0, 0, 0] }: SexIcon3DProps) {
+  function Model() {
+    const { scene, animations }: any = useGLTF(modelPath);
+    const mixer = React.useRef<AnimationMixer | null>(null);
+    React.useEffect(() => {
+      if (animate && animations && animations.length > 0 && scene) {
+        mixer.current = new AnimationMixer(scene);
+        animations.forEach((clip: any) => {
+          mixer.current?.clipAction(clip).play();
+        });
+      }
+      return () => {
+        if (mixer.current) {
+          mixer.current.stopAllAction();
+        }
+      };
+    }, [animate, animations, scene]);
+    useFrame((state, delta) => {
+      if (mixer.current && animate) {
+        mixer.current.update(delta);
+      }
+    });
+    return <primitive object={scene} />;
+  }
+  return (
+    <div className={className + " flex items-center justify-center"}>
+      <Canvas camera={{ fov: 55, position: [0, 2, 3] }}>
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[0, 0, 5]} intensity={1} />
+        <Suspense fallback={null}>
+          <group scale={scale} position={position}>
+            <Model />
+          </group>
+          <OrbitControls enableZoom={false} enablePan={false} target={[0, 0.8, 0]} />
+        </Suspense>
+      </Canvas>
+    </div>
+  );
+}
+
 export function DiagnosisForm({
   form,
   onSubmit,
@@ -1059,9 +1113,21 @@ export function DiagnosisForm({
   }, [filteredSymptomTypesForDropdown, form, selectedLocations]);
 
   const sexOptions = [
-    { value: 'male', label: 'Male', Icon: MaleSexIcon },
-    { value: 'female', label: 'Female', Icon: FemaleSexIcon },
-    { value: 'other', label: 'Other / Prefer not to say', Icon: OtherSexIcon },
+    {
+      value: 'male',
+      label: 'Male',
+      Icon: () => null, // will be handled in render
+    },
+    {
+      value: 'female',
+      label: 'Female',
+      Icon: () => null, // will be handled in render
+    },
+    {
+      value: 'other',
+      label: 'Other / Prefer not to say',
+      Icon: OtherSexIcon, // fallback to SVG for 'other'
+    },
   ];
 
   const fieldsForStep: FieldPath<FormValues>[][] = [
@@ -1188,18 +1254,29 @@ export function DiagnosisForm({
                             aria-checked={field.value === option.value}
                             onClick={() => field.onChange(option.value as 'male' | 'female' | 'other')}
                             className={cn(
-                              'group flex-1 p-3 border rounded-md flex flex-col items-center justify-center gap-2 transition-all duration-150 ease-in-out',
-                              'hover:shadow-md hover:border-primary/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                              'group flex-1 p-6 border rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-150 ease-in-out',
+                              'hover:shadow-lg hover:border-primary/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                               field.value === option.value
-                                ? 'border-primary ring-2 ring-primary ring-offset-2 bg-primary/10 shadow-lg'
+                                ? 'border-primary ring-2 ring-primary ring-offset-2 bg-primary/10 shadow-xl'
                                 : 'border-input bg-card hover:bg-muted/50'
                             )}
                             aria-label={option.label}
+                            style={{ minHeight: '220px' }}
                           >
-                            <option.Icon />
+                            {option.value === 'male' || option.value === 'female' ? (
+                              <SexIcon3D
+                                modelPath={option.value === 'male' ? '/models/male_walking.glb' : '/models/female_walking.glb'}
+                                scale={option.value === 'male' ? 1.4 : 1.3}
+                                className="w-36 h-36"
+                                animate={field.value === option.value}
+                                position={option.value === 'female' ? [0, -0.2, 0] : [0, -0.2, 0]}
+                              />
+                            ) : (
+                              <option.Icon />
+                            )}
                             <span
                               className={cn(
-                                'text-xs text-center font-medium',
+                                'text-base text-center font-medium',
                                 field.value === option.value ? 'text-primary' : 'text-foreground/80'
                               )}
                             >
