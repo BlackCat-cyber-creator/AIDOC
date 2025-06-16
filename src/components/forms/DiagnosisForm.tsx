@@ -1029,7 +1029,13 @@ function SexIcon3D({ modelPath, scale = 1.3, className = "w-36 h-36", animate = 
           <group scale={scale} position={position}>
             <Model />
           </group>
-          <OrbitControls enableZoom={false} enablePan={false} target={[0, 0.8, 0]} />
+          <OrbitControls
+            enableZoom={false}
+            enablePan={false}
+            minPolarAngle={Math.PI / 5} // Allow rotation down to 45 degrees from top pole
+            maxPolarAngle={(3 * Math.PI) / 5} // Allow rotation up to 45 degrees from bottom pole
+            target={[0, 0.8, 0]} // Ensure the camera targets the model correctly
+          />
         </Suspense>
       </Canvas>
     </div>
@@ -1142,6 +1148,7 @@ export function DiagnosisForm({
     const isValid = await form.trigger(fieldsToValidate);
     if (isValid) {
       setCurrentStep((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
     } else {
       const firstErrorField = fieldsToValidate.find((field) => {
         const fieldState = form.getFieldState(field);
@@ -1269,7 +1276,7 @@ export function DiagnosisForm({
                                 scale={option.value === 'male' ? 1.4 : 1.3}
                                 className="w-36 h-36"
                                 animate={field.value === option.value}
-                                position={option.value === 'female' ? [0, -0.2, 0] : [0, -0.2, 0]}
+                                position={option.value === 'female' ? [0, -0.4, 0] : [0, -0.4, 0]}
                               />
                             ) : (
                               <option.Icon />
