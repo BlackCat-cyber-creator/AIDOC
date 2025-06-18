@@ -26,7 +26,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { CircleCheck, CircleX } from 'lucide-react';
 import { HumanAnatomy3D } from '@/components/3d/HumanAnatomy3D';
 import { AppIcon3D } from '@/components/3d/AppIcon3D';
 import { Suspense } from 'react';
@@ -1171,6 +1170,7 @@ export function DiagnosisForm({
 
   const handlePrev = () => {
     setCurrentStep((prev) => prev - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
   };
 
   return (
@@ -1371,8 +1371,7 @@ export function DiagnosisForm({
                                   isValid && 'border-primary focus-visible:ring-primary'
                                 )}
                               />
-                              {hasError && <CircleX className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
-                              {isValid && <CircleCheck className="absolute right-3 top-3 h-4 w-4 text-primary" />}
+                              {hasError && <XIcon className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
                             </div>
                           </PopoverTrigger>
                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -1480,8 +1479,7 @@ export function DiagnosisForm({
                                   isValid && 'border-primary focus-visible:ring-primary'
                                 )}
                               />
-                              {hasError && <CircleX className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
-                              {isValid && <CircleCheck className="absolute right-3 top-3 h-4 w-4 text-primary" />}
+                              {hasError && <XIcon className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
                             </div>
                           </PopoverTrigger>
                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -1589,8 +1587,7 @@ export function DiagnosisForm({
                                   isValid && 'border-primary focus-visible:ring-primary'
                                 )}
                               />
-                              {hasError && <CircleX className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
-                              {isValid && <CircleCheck className="absolute right-3 top-3 h-4 w-4 text-primary" />}
+                              {hasError && <XIcon className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
                             </div>
                           </PopoverTrigger>
                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -1946,10 +1943,7 @@ export function DiagnosisForm({
                         </div>
                       </FormControl>
                       {hasError && (
-                        <CircleX className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
-                      )}
-                      {isValid && (
-                        <CircleCheck className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                        <XIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
                       )}
                       <FormMessage />
                     </FormItem>
@@ -2004,10 +1998,7 @@ export function DiagnosisForm({
                             )}
                           />
                           {hasError && (
-                            <CircleX className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
-                          )}
-                          {isValid && (
-                            <CircleCheck className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                            <XIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
                           )}
                         </div>
                       </FormControl>
@@ -2045,8 +2036,8 @@ export function DiagnosisForm({
                               isValid && 'border-primary focus-visible:ring-primary'
                             )}
                           />
-                          {hasError && <CircleX className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
-                          {isValid && <CircleCheck className="absolute right-3 top-3 h-4 w-4 text-primary" />}
+                          {hasError && <XIcon className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
+                          {isValid && <XIcon className="absolute right-3 top-3 h-4 w-4 text-primary" />}
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -2080,8 +2071,8 @@ export function DiagnosisForm({
                               isValid && 'border-primary focus-visible:ring-primary'
                             )}
                           />
-                          {hasError && <CircleX className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
-                          {isValid && <CircleCheck className="absolute right-3 top-3 h-4 w-4 text-primary" />}
+                          {hasError && <XIcon className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
+                          {isValid && <XIcon className="absolute right-3 top-3 h-4 w-4 text-primary" />}
                         </div>
                       </FormControl>
                       <FormDescription>
