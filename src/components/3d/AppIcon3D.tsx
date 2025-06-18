@@ -85,7 +85,12 @@ export function AppIcon3D({ modelPath, scale = 1, position = [0, 0, 0], rotation
           <group scale={scale} position={position} rotation={rotation}>
             <Model modelPath={modelPath} animate={animate} />
           </group>
-          <OrbitControls enableZoom={false} enablePan={false} />
+          <OrbitControls
+            enableZoom={false}
+            enablePan={false}
+            minPolarAngle={Math.PI / 5}
+            maxPolarAngle={(3 * Math.PI) / 5}
+          />
         </Suspense>
       </Canvas>
     </div>

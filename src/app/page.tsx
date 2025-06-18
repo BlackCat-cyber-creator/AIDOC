@@ -162,9 +162,9 @@ function ClientPageContent() {
   };
 
   return (
-    <div className={`${inter.variable} font-body flex min-h-screen flex-col`}>
+    <div className={`${inter.variable} font-body flex min-h-screen flex-col overflow-x-hidden`}>
       <AppHeader />
-      <main className="container mx-auto flex-grow px-4 pb-12 sm:px-6 lg:px-8">
+      <main className="container mx-auto flex-grow px-4 pb-12 sm:px-6 lg:px-8 w-full">
         {viewMode === 'form' && (
           <DiagnosisForm
             form={form}
@@ -201,7 +201,7 @@ function ClientPageContent() {
         )}
       </main>
       <footer className="mt-auto border-t border-border py-4">
-        <div className="container mx-auto text-center text-sm text-muted-foreground">
+        <div className="container mx-auto text-center text-sm sm:text-base text-muted-foreground px-2">
           <p className="font-semibold">Disclaimer:</p>
           <p>
             AIDOC © {currentYear ?? new Date().getFullYear()}. This tool provides information for educational purposes

@@ -996,7 +996,13 @@ interface SexIcon3DProps {
   position?: [number, number, number];
 }
 
-function SexIcon3D({ modelPath, scale = 1.3, className = "w-36 h-36", animate = false, position = [0, 0, 0] }: SexIcon3DProps) {
+function SexIcon3D({
+  modelPath,
+  scale = 1.3,
+  className = 'w-36 h-36',
+  animate = false,
+  position = [0, 0, 0],
+}: SexIcon3DProps) {
   function Model() {
     const { scene, animations }: any = useGLTF(modelPath);
     const mixer = React.useRef<AnimationMixer | null>(null);
@@ -1021,7 +1027,7 @@ function SexIcon3D({ modelPath, scale = 1.3, className = "w-36 h-36", animate = 
     return <primitive object={scene} />;
   }
   return (
-    <div className={className + " flex items-center justify-center"}>
+    <div className={className + ' flex items-center justify-center'}>
       <Canvas camera={{ fov: 55, position: [0, 2, 3] }}>
         <ambientLight intensity={0.8} />
         <directionalLight position={[0, 0, 5]} intensity={1} />
@@ -1272,7 +1278,9 @@ export function DiagnosisForm({
                           >
                             {option.value === 'male' || option.value === 'female' ? (
                               <SexIcon3D
-                                modelPath={option.value === 'male' ? '/models/male_walking.glb' : '/models/female_walking.glb'}
+                                modelPath={
+                                  option.value === 'male' ? '/models/male_walking.glb' : '/models/female_walking.glb'
+                                }
                                 scale={option.value === 'male' ? 1.4 : 1.3}
                                 className="w-36 h-36"
                                 animate={field.value === option.value}

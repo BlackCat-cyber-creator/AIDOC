@@ -2,7 +2,7 @@
 
 import React, { Suspense, useRef, useEffect, useState, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, OrbitControls, Html } from '@react-three/drei';
+import { useGLTF, Html } from '@react-three/drei';
 import {
   Box3,
   Vector3,
@@ -14,6 +14,7 @@ import {
   Group,
   Object3D,
 } from 'three';
+import { InteractiveOrbitControls } from './InteractiveOrbitControls';
 
 interface HumanAnatomy3DProps {
   selectedSex: 'male' | 'female' | 'other';
@@ -89,7 +90,7 @@ function AnatomyModel({
   disabled?: boolean;
   selectedSex: 'male' | 'female' | 'other';
   bodyRegions: BodyPart[];
-  onModelLoaded: (center: Vector3) => void;
+  onModelLoaded: (center: Vector3, distance: number) => void;
 }) {
   const { scene: gltfScene, animations } = useGLTF(modelPath);
   const { camera, raycaster, mouse, size } = useThree();
@@ -123,10 +124,8 @@ function AnatomyModel({
       const box = new Box3().setFromObject(clonedScene.current);
       const center = new Vector3();
       box.getCenter(center);
-      if (onModelLoaded) {
-        onModelLoaded(center);
-      }
 
+      let distance = 0;
       // Initial camera setup (still need this for initial view, but without `OrbitControls` manipulation)
       if (camera instanceof PerspectiveCamera) {
         const sizeVec = new Vector3();
@@ -135,7 +134,7 @@ function AnatomyModel({
         // Calculate camera distance to fit the entire model
         const objectSize = Math.max(sizeVec.x, sizeVec.y, sizeVec.z);
         const fovRad = (Math.PI * camera.fov) / 360;
-        let distance = objectSize / 2 / Math.tan(fovRad);
+        distance = objectSize / 2 / Math.tan(fovRad);
 
         // Adjust distance for aspect ratio if necessary, prioritizing vertical fit
         const aspectRatio = size.width / size.height;
@@ -149,6 +148,9 @@ function AnatomyModel({
         camera.position.set(center.x, center.y, center.z + distance);
         camera.lookAt(center); // Look at the adjusted center
         camera.updateProjectionMatrix();
+      }
+      if (onModelLoaded) {
+        onModelLoaded(center, distance);
       }
     }
   }, [gltfScene, camera, onModelLoaded, size]);
@@ -229,13 +231,15 @@ export function HumanAnatomy3D({
   const filteredBodyRegions = currentBodyRegions.filter((region) => !region.sex || region.sex === selectedSex);
 
   const [initialCameraTarget, setInitialCameraTarget] = useState<Vector3 | null>(null);
+  const [initialCameraDistance, setInitialCameraDistance] = useState<number | null>(null);
 
-  const handleModelLoaded = useCallback((center: Vector3) => {
+  const handleModelLoaded = useCallback((center: Vector3, distance: number) => {
     setInitialCameraTarget(center);
+    setInitialCameraDistance(distance);
   }, []);
 
   return (
-    <div className="w-full h-[350px] md:h-[500px] flex items-center justify-center relative">
+    <div className="w-full h-[40vh] min-h-[250px] max-h-[400px] md:h-[500px] flex items-center justify-center relative">
       <Canvas
         camera={{ fov: 90 }}
         onPointerMissed={() => {
@@ -254,19 +258,13 @@ export function HumanAnatomy3D({
               onLocationToggle={onLocationToggle}
               disabled={disabled}
               selectedSex={selectedSex}
-              bodyRegions={currentBodyRegions}
+              bodyRegions={filteredBodyRegions}
               onModelLoaded={handleModelLoaded}
             />
+            {initialCameraTarget && initialCameraDistance !== null && (
+              <InteractiveOrbitControls target={initialCameraTarget.toArray()} initialCameraDistance={initialCameraDistance} />
+            )}
           </group>
-          {initialCameraTarget && (
-            <OrbitControls
-              enableZoom={false}
-              enablePan={false}
-              minPolarAngle={Math.PI / 2}
-              maxPolarAngle={Math.PI / 2}
-              target={initialCameraTarget}
-            />
-          )}
           {/* Clickable regions */}
           {filteredBodyRegions.map((part) => {
             const isSelected = selectedLocations.includes(part.id);
