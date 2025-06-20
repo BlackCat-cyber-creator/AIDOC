@@ -59,12 +59,11 @@ function Model({ modelPath, animate }: { modelPath: string; animate?: boolean })
         camera.updateProjectionMatrix();
 
         // Adjust camera's Y position significantly downwards for a more direct view
-        camera.position.y -= (size.y * 0.5); // Increased adjustment to 50% of model's height
+        camera.position.y -= size.y * 0.5; // Increased adjustment to 50% of model's height
         camera.lookAt(center); // Re-point camera at center after adjustment
         camera.updateProjectionMatrix();
-
       } else {
-        console.warn("Camera is not a PerspectiveCamera. Auto-fitting might not work as expected.", camera);
+        console.warn('Camera is not a PerspectiveCamera. Auto-fitting might not work as expected.', camera);
       }
     }
   }, [scene, camera]);
@@ -73,9 +72,15 @@ function Model({ modelPath, animate }: { modelPath: string; animate?: boolean })
   return <primitive object={scene} />;
 }
 
-export function AppIcon3D({ modelPath, scale = 1, position = [0, 0, 0], rotation = [0, 0, 0], animate = true }: AppIcon3DProps) {
+export function AppIcon3D({
+  modelPath,
+  scale = 1,
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  animate = true,
+}: AppIcon3DProps) {
   return (
-    <div className="w-64 h-64 flex items-center justify-center">
+    <div className="w-64 h-64 sm:w-44 sm:h-44 md:w-48 md:h-48 lg:w-60 lg:h-60 flex items-center justify-center">
       <Canvas camera={{ fov: 75 }}>
         <ambientLight intensity={0.8} />
         <directionalLight position={[0, 0, 5]} intensity={1} />
@@ -95,4 +100,4 @@ export function AppIcon3D({ modelPath, scale = 1, position = [0, 0, 0], rotation
       </Canvas>
     </div>
   );
-} 
+}
