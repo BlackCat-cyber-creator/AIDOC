@@ -32,99 +32,98 @@ import { Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, OrbitControls } from '@react-three/drei';
 import { AnimationMixer } from 'three';
+import Image from 'next/image';
 
 // --- SVG Icons for Age ---
 const InfantFaceIcon = () => (
-  <svg viewBox="0 0 100 100" width="80" height="80" className="text-primary">
-    <circle cx="50" cy="50" r="40" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" />
-    <circle cx="35" cy="40" r="5" fill="currentColor" />
-    <circle cx="65" cy="40" r="5" fill="currentColor" />
-    <path d="M40 60 Q50 65 60 60" stroke="currentColor" strokeWidth="4" fill="none" />
-    <path d="M45 25 Q50 15 55 25" stroke="currentColor" strokeWidth="3" fill="none" />
-  </svg>
+  <Image
+    src="/images/age_icons/infant.png"
+    alt="Infant Face Icon"
+    width={80}
+    height={80}
+    className="object-contain transition-opacity duration-300"
+  />
 );
 const ToddlerFaceIcon = () => (
-  <svg viewBox="0 0 100 100" width="80" height="80" className="text-primary">
-    <circle cx="50" cy="50" r="38" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" />
-    <circle cx="37" cy="42" r="5.5" fill="currentColor" />
-    <circle cx="63" cy="42" r="5.5" fill="currentColor" />
-    <path d="M38 63 Q50 70 62 63" stroke="currentColor" strokeWidth="4" fill="none" />
-    <path d="M35 28 Q40 20 45 28 M50 28 Q55 20 60 28" stroke="currentColor" strokeWidth="2.5" fill="none" />
-  </svg>
+  <Image
+    src="/images/age_icons/toddler.png"
+    alt="Toddler Face Icon"
+    width={80}
+    height={80}
+    className="object-contain transition-opacity duration-300"
+  />
 );
 const PreschoolFaceIcon = () => (
-  <svg viewBox="0 0 100 100" width="80" height="80" className="text-primary">
-    <circle cx="50" cy="50" r="38" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" />
-    <circle cx="38" cy="43" r="6" fill="currentColor" />
-    <circle cx="62" cy="43" r="6" fill="currentColor" />
-    <path d="M35 65 Q50 75 65 65" stroke="currentColor" strokeWidth="4" fill="none" />
-    <path d="M35 30 Q38 22 43 30 M52 30 Q57 22 62 30" stroke="currentColor" strokeWidth="2.5" fill="none" />
-  </svg>
+  <Image
+    src="/images/age_icons/preschooler.png"
+    alt="Preschooler Face Icon"
+    width={80}
+    height={80}
+    className="object-contain transition-opacity duration-300"
+  />
 );
 const SchoolAgeFaceIcon = () => (
-  <svg viewBox="0 0 100 100" width="80" height="80" className="text-primary">
-    <circle cx="50" cy="50" r="38" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" />
-    <ellipse cx="38" cy="45" rx="5.5" ry="6.5" fill="currentColor" />
-    <ellipse cx="62" cy="45" rx="5.5" ry="6.5" fill="currentColor" />
-    <path d="M38 68 Q50 73 62 68" stroke="currentColor" strokeWidth="3.5" fill="none" />
-    <path d="M30 32 Q35 25 45 32 M55 32 Q65 25 70 32" stroke="currentColor" strokeWidth="2.5" fill="none" />
-  </svg>
+  <Image
+    src="/images/age_icons/schoolage.png"
+    alt="School Age Face Icon"
+    width={80}
+    height={80}
+    className="object-contain transition-opacity duration-300"
+  />
 );
 const AdolescentFaceIcon = () => (
-  <svg viewBox="0 0 100 100" width="80" height="80" className="text-primary">
-    <circle cx="50" cy="50" r="37" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" />
-    <ellipse cx="38" cy="46" rx="5" ry="7" fill="currentColor" />
-    <ellipse cx="62" cy="46" rx="5" ry="7" fill="currentColor" />
-    <path d="M40 70 Q50 72 60 70" stroke="currentColor" strokeWidth="3.5" fill="none" />
-    <path d="M28 35 Q40 28 50 35 Q60 28 72 35" stroke="currentColor" strokeWidth="2" fill="none" />
-  </svg>
+  <Image
+    src="/images/age_icons/adolescent.png"
+    alt="Adolescent Face Icon"
+    width={80}
+    height={80}
+    className="object-contain transition-opacity duration-300"
+  />
 );
 const YoungAdultFaceIcon = () => (
-  <svg viewBox="0 0 100 100" width="80" height="80" className="text-primary">
-    <circle cx="50" cy="50" r="36" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" />
-    <ellipse cx="39" cy="47" rx="4.5" ry="6.5" fill="currentColor" />
-    <ellipse cx="61" cy="47" rx="4.5" ry="6.5" fill="currentColor" />
-    <path d="M42 71 Q50 73 58 71" stroke="currentColor" strokeWidth="3" fill="none" />
-    <path d="M28 38 Q40 32 50 38 Q60 32 72 38" stroke="currentColor" strokeWidth="2" fill="none" />
-  </svg>
+  <Image
+    src="/images/age_icons/youngadult.png"
+    alt="Young Adult Face Icon"
+    width={80}
+    height={80}
+    className="object-contain transition-opacity duration-300"
+  />
 );
 const MiddleAgeAdultFaceIcon = () => (
-  <svg viewBox="0 0 100 100" width="80" height="80" className="text-primary">
-    <circle cx="50" cy="50" r="36" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" />
-    <ellipse cx="39" cy="47" rx="4.5" ry="6" fill="currentColor" />
-    <ellipse cx="61" cy="47" rx="4.5" ry="6" fill="currentColor" />
-    <path d="M42 70 Q50 71 58 70" stroke="currentColor" strokeWidth="3" fill="none" />
-    <path d="M32 36 Q35 33 38 36 M62 36 Q65 33 68 36" stroke="currentColor" strokeWidth="1.5" fill="none" />
-    <path d="M35 60 Q33 63 35 65 M65 60 Q67 63 65 65" stroke="currentColor" strokeWidth="1" fill="none" />
-  </svg>
+  <Image
+    src="/images/age_icons/middleageadult.png"
+    alt="Middle Age Adult Face Icon"
+    width={80}
+    height={80}
+    className="object-contain transition-opacity duration-300"
+  />
 );
 const OlderAdultFaceIcon = () => (
-  <svg viewBox="0 0 100 100" width="80" height="80" className="text-primary">
-    <circle cx="50" cy="50" r="36" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" />
-    <ellipse cx="38" cy="46" rx="4.5" ry="6" fill="currentColor" />
-    <ellipse cx="62" cy="46" rx="4.5" ry="6" fill="currentColor" />
-    <path d="M42 70 Q50 68 58 70" stroke="currentColor" strokeWidth="3" fill="none" />
-    <path d="M30 35 Q35 30 40 35 M60 35 Q65 30 70 35" stroke="currentColor" strokeWidth="2" fill="none" />
-    <path d="M35 58 Q32 62 35 64 M65 58 Q68 62 65 64" stroke="currentColor" strokeWidth="1.5" fill="none" />
-  </svg>
+  <Image
+    src="/images/age_icons/olderadult.png"
+    alt="Older Adult Face Icon"
+    width={80}
+    height={80}
+    className="object-contain transition-opacity duration-300"
+  />
 );
 
 const getAgeIconAndLabel = (
   ageInput: number | string | undefined
 ): { IconComponent: React.FC<object>; label: string } => {
   const numericAge =
-    typeof ageInput === 'string' ? parseInt(ageInput, 10) : typeof ageInput === 'number' ? ageInput : 30;
+    typeof ageInput === 'string' ? parseInt(ageInput, 10) : typeof ageInput === 'number' ? ageInput : 0;
 
-  let IconComponent: React.FC<object>; // Declared once here
-  if (numericAge === 0) IconComponent = InfantFaceIcon as React.FC<object>;
-  else if (numericAge >= 1 && numericAge <= 3) IconComponent = ToddlerFaceIcon as React.FC<object>;
-  else if (numericAge >= 4 && numericAge <= 5) IconComponent = PreschoolFaceIcon as React.FC<object>;
-  else if (numericAge >= 6 && numericAge <= 12) IconComponent = SchoolAgeFaceIcon as React.FC<object>;
-  else if (numericAge >= 13 && numericAge <= 18) IconComponent = AdolescentFaceIcon as React.FC<object>;
-  else if (numericAge >= 19 && numericAge <= 40) IconComponent = YoungAdultFaceIcon as React.FC<object>;
-  else if (numericAge >= 41 && numericAge <= 64) IconComponent = MiddleAgeAdultFaceIcon as React.FC<object>;
-  else if (numericAge >= 65) IconComponent = OlderAdultFaceIcon as React.FC<object>;
-  else IconComponent = YoungAdultFaceIcon as React.FC<object>; // Default assignment to avoid unassigned error
+  let IconComponent: React.FC<object>;
+  if (numericAge === 0) IconComponent = InfantFaceIcon;
+  else if (numericAge >= 1 && numericAge <= 3) IconComponent = ToddlerFaceIcon;
+  else if (numericAge >= 4 && numericAge <= 5) IconComponent = PreschoolFaceIcon;
+  else if (numericAge >= 6 && numericAge <= 12) IconComponent = SchoolAgeFaceIcon;
+  else if (numericAge >= 13 && numericAge <= 18) IconComponent = AdolescentFaceIcon;
+  else if (numericAge >= 19 && numericAge <= 40) IconComponent = YoungAdultFaceIcon;
+  else if (numericAge >= 41 && numericAge <= 64) IconComponent = MiddleAgeAdultFaceIcon;
+  else if (numericAge >= 65) IconComponent = OlderAdultFaceIcon;
+  else IconComponent = YoungAdultFaceIcon;
 
   let labelText = `${numericAge}`;
   if (numericAge >= 65) {
@@ -1997,9 +1996,6 @@ export function DiagnosisForm({
                               isValid && 'border-primary focus-visible:ring-primary'
                             )}
                           />
-                          {hasError && (
-                            <XIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
-                          )}
                         </div>
                       </FormControl>
                       <FormDescription>

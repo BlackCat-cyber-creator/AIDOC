@@ -51,8 +51,8 @@ const DiagnosisSchema = z.object({
 const GenerateDiagnosesOutputSchema = z.object({
   diagnoses: z
     .array(DiagnosisSchema)
-    .length(3)
-    .describe('An array of three possible diagnoses, each including condition, explanation, urgency, and next steps.'),
+    .length(5)
+    .describe('An array of five possible diagnoses, each including condition, explanation, urgency, and next steps.'),
 });
 export type GenerateDiagnosesOutput = z.infer<typeof GenerateDiagnosesOutputSchema>;
 
@@ -68,7 +68,7 @@ const generateDiagnosesPrompt = ai.definePrompt({
 
 Critically, ensure all diagnoses provided are medically appropriate and plausible for the patient's stated age (which might be a number or a string like "65+") and sex. For example, do not suggest conditions specific to one sex if the patient is of a different sex, or pediatric conditions for an adult patient, and vice-versa.
 
-Your response MUST be a JSON object. This JSON object must contain a key named "diagnoses". The value of "diagnoses" MUST be an array containing exactly three distinct diagnosis objects.
+Your response MUST be a JSON object. This JSON object must contain a key named "diagnoses". The value of "diagnoses" MUST be an array containing exactly five distinct diagnosis objects.
 Each diagnosis object in the "diagnoses" array must have the following structure and content:
 - "condition": <string> The name of the possible condition.
 - "explanation": <string, 1–2 sentences> A brief, clear explanation of the condition, avoiding overly technical jargon where simpler terms suffice for patient understanding.

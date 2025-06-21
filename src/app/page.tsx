@@ -68,7 +68,7 @@ function ClientPageContent() {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       profile: {
-        age: 30,
+        age: 0,
         sex: undefined,
         chronic_conditions: '',
         medications: '',
@@ -181,7 +181,7 @@ function ClientPageContent() {
             <Button
               onClick={handleStartNewDiagnosis}
               variant="outline"
-              className="mb-8 w-full md:w-auto"
+              className="mb-8 w-full md:w-auto relative z-50"
               aria-label="Start New Diagnosis"
             >
               <RotateCcw className="mr-2 h-4 w-4" />

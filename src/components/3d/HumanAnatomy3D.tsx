@@ -262,7 +262,10 @@ export function HumanAnatomy3D({
               onModelLoaded={handleModelLoaded}
             />
             {initialCameraTarget && initialCameraDistance !== null && (
-              <InteractiveOrbitControls target={initialCameraTarget.toArray()} initialCameraDistance={initialCameraDistance} />
+              <InteractiveOrbitControls
+                target={initialCameraTarget.toArray()}
+                initialCameraDistance={initialCameraDistance}
+              />
             )}
           </group>
           {/* Clickable regions */}

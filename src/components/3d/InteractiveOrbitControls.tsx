@@ -8,7 +8,10 @@ interface InteractiveOrbitControlsProps {
   initialCameraDistance: number | null;
 }
 
-export const InteractiveOrbitControls: React.FC<InteractiveOrbitControlsProps> = ({ target, initialCameraDistance }) => {
+export const InteractiveOrbitControls: React.FC<InteractiveOrbitControlsProps> = ({
+  target,
+  initialCameraDistance,
+}) => {
   const controlsRef = useRef<any>(); // OrbitControls type
   const { camera } = useThree();
 
@@ -31,4 +34,4 @@ export const InteractiveOrbitControls: React.FC<InteractiveOrbitControlsProps> =
       maxPolarAngle={Math.PI / 2 + 0.2} // Allow some vertical rotation downwards
     />
   );
-}; 
+};
