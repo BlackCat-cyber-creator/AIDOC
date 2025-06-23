@@ -37,7 +37,7 @@ import Image from 'next/image';
 // --- SVG Icons for Age ---
 const InfantFaceIcon = () => (
   <Image
-    src="/images/age_icons/infant.png"
+    src="/images/age_icons/infant.webp"
     alt="Infant Face Icon"
     width={80}
     height={80}
@@ -46,7 +46,7 @@ const InfantFaceIcon = () => (
 );
 const ToddlerFaceIcon = () => (
   <Image
-    src="/images/age_icons/toddler.png"
+    src="/images/age_icons/toddler.webp"
     alt="Toddler Face Icon"
     width={80}
     height={80}
@@ -55,7 +55,7 @@ const ToddlerFaceIcon = () => (
 );
 const PreschoolFaceIcon = () => (
   <Image
-    src="/images/age_icons/preschooler.png"
+    src="/images/age_icons/preschooler.webp"
     alt="Preschooler Face Icon"
     width={80}
     height={80}
@@ -64,7 +64,7 @@ const PreschoolFaceIcon = () => (
 );
 const SchoolAgeFaceIcon = () => (
   <Image
-    src="/images/age_icons/schoolage.png"
+    src="/images/age_icons/schoolage.webp"
     alt="School Age Face Icon"
     width={80}
     height={80}
@@ -73,7 +73,7 @@ const SchoolAgeFaceIcon = () => (
 );
 const AdolescentFaceIcon = () => (
   <Image
-    src="/images/age_icons/adolescent.png"
+    src="/images/age_icons/adolescent.webp"
     alt="Adolescent Face Icon"
     width={80}
     height={80}
@@ -82,7 +82,7 @@ const AdolescentFaceIcon = () => (
 );
 const YoungAdultFaceIcon = () => (
   <Image
-    src="/images/age_icons/youngadult.png"
+    src="/images/age_icons/youngadult.webp"
     alt="Young Adult Face Icon"
     width={80}
     height={80}
@@ -91,7 +91,7 @@ const YoungAdultFaceIcon = () => (
 );
 const MiddleAgeAdultFaceIcon = () => (
   <Image
-    src="/images/age_icons/middleageadult.png"
+    src="/images/age_icons/middleageadult.webp"
     alt="Middle Age Adult Face Icon"
     width={80}
     height={80}
@@ -100,7 +100,7 @@ const MiddleAgeAdultFaceIcon = () => (
 );
 const OlderAdultFaceIcon = () => (
   <Image
-    src="/images/age_icons/olderadult.png"
+    src="/images/age_icons/olderadult.webp"
     alt="Older Adult Face Icon"
     width={80}
     height={80}
