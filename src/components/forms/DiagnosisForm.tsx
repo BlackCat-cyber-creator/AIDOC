@@ -33,103 +33,47 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, OrbitControls } from '@react-three/drei';
 import { AnimationMixer } from 'three';
 import Image from 'next/image';
+import { maleBodyRegions, femaleBodyRegions } from '@/components/3d/HumanAnatomy3D';
 
-// --- SVG Icons for Age ---
-const InfantFaceIcon = () => (
-  <Image
-    src="/images/age_icons/infant.webp"
-    alt="Infant Face Icon"
-    width={80}
-    height={80}
-    className="object-contain transition-opacity duration-300"
-  />
-);
-const ToddlerFaceIcon = () => (
-  <Image
-    src="/images/age_icons/toddler.webp"
-    alt="Toddler Face Icon"
-    width={80}
-    height={80}
-    className="object-contain transition-opacity duration-300"
-  />
-);
-const PreschoolFaceIcon = () => (
-  <Image
-    src="/images/age_icons/preschooler.webp"
-    alt="Preschooler Face Icon"
-    width={80}
-    height={80}
-    className="object-contain transition-opacity duration-300"
-  />
-);
-const SchoolAgeFaceIcon = () => (
-  <Image
-    src="/images/age_icons/schoolage.webp"
-    alt="School Age Face Icon"
-    width={80}
-    height={80}
-    className="object-contain transition-opacity duration-300"
-  />
-);
-const AdolescentFaceIcon = () => (
-  <Image
-    src="/images/age_icons/adolescent.webp"
-    alt="Adolescent Face Icon"
-    width={80}
-    height={80}
-    className="object-contain transition-opacity duration-300"
-  />
-);
-const YoungAdultFaceIcon = () => (
-  <Image
-    src="/images/age_icons/youngadult.webp"
-    alt="Young Adult Face Icon"
-    width={80}
-    height={80}
-    className="object-contain transition-opacity duration-300"
-  />
-);
-const MiddleAgeAdultFaceIcon = () => (
-  <Image
-    src="/images/age_icons/middleageadult.webp"
-    alt="Middle Age Adult Face Icon"
-    width={80}
-    height={80}
-    className="object-contain transition-opacity duration-300"
-  />
-);
-const OlderAdultFaceIcon = () => (
-  <Image
-    src="/images/age_icons/olderadult.webp"
-    alt="Older Adult Face Icon"
-    width={80}
-    height={80}
-    className="object-contain transition-opacity duration-300"
-  />
-);
+interface BodyPart {
+  id: string;
+  label: string;
+  center: [number, number, number];
+  radius: number;
+  sex?: 'male' | 'female';
+}
 
-const getAgeIconAndLabel = (
-  ageInput: number | string | undefined
-): { IconComponent: React.FC<object>; label: string } => {
+const ageIconMap: { [key: string]: string } = {
+  infant: '/images/age_icons/infant.webp',
+  toddler: '/images/age_icons/toddler.webp',
+  preschooler: '/images/age_icons/preschooler.webp',
+  schoolage: '/images/age_icons/schoolage.webp',
+  adolescent: '/images/age_icons/adolescent.webp',
+  youngadult: '/images/age_icons/youngadult.webp',
+  middleageadult: '/images/age_icons/middleageadult.webp',
+  olderadult: '/images/age_icons/olderadult.webp',
+};
+
+const getAgeIconAndLabel = (ageInput: number | string | undefined): { iconPath: string; label: string } => {
   const numericAge =
     typeof ageInput === 'string' ? parseInt(ageInput, 10) : typeof ageInput === 'number' ? ageInput : 0;
 
-  let IconComponent: React.FC<object>;
-  if (numericAge === 0) IconComponent = InfantFaceIcon;
-  else if (numericAge >= 1 && numericAge <= 3) IconComponent = ToddlerFaceIcon;
-  else if (numericAge >= 4 && numericAge <= 5) IconComponent = PreschoolFaceIcon;
-  else if (numericAge >= 6 && numericAge <= 12) IconComponent = SchoolAgeFaceIcon;
-  else if (numericAge >= 13 && numericAge <= 18) IconComponent = AdolescentFaceIcon;
-  else if (numericAge >= 19 && numericAge <= 40) IconComponent = YoungAdultFaceIcon;
-  else if (numericAge >= 41 && numericAge <= 64) IconComponent = MiddleAgeAdultFaceIcon;
-  else if (numericAge >= 65) IconComponent = OlderAdultFaceIcon;
-  else IconComponent = YoungAdultFaceIcon;
+  let iconKey: keyof typeof ageIconMap;
+  if (numericAge === 0) iconKey = 'infant';
+  else if (numericAge >= 1 && numericAge <= 3) iconKey = 'toddler';
+  else if (numericAge >= 4 && numericAge <= 5) iconKey = 'preschooler';
+  else if (numericAge >= 6 && numericAge <= 12) iconKey = 'schoolage';
+  else if (numericAge >= 13 && numericAge <= 18) iconKey = 'adolescent';
+  else if (numericAge >= 19 && numericAge <= 40) iconKey = 'youngadult';
+  else if (numericAge >= 41 && numericAge <= 64) iconKey = 'middleageadult';
+  else if (numericAge >= 65) iconKey = 'olderadult';
+  else iconKey = 'youngadult';
 
   let labelText = `${numericAge}`;
   if (numericAge >= 65) {
     labelText = '65+';
   }
-  return { IconComponent, label: `Selected Age: ${labelText}` };
+  return { iconPath: ageIconMap[iconKey], label: `Selected Age: ${labelText}` };
 };
 
 const MaleSexIcon = () => (
@@ -455,7 +399,6 @@ const stepIcons: Record<number, React.ElementType> = {
   3: ClipboardList,
 };
 
-// Add types for SexIcon3D props
 interface SexIcon3DProps {
   modelPath: string;
   scale?: number;
@@ -474,6 +417,7 @@ function SexIcon3D({
   function Model() {
     const { scene, animations }: any = useGLTF(modelPath);
     const mixer = React.useRef<AnimationMixer | null>(null);
+
     React.useEffect(() => {
       if (animate && animations && animations.length > 0 && scene) {
         mixer.current = new AnimationMixer(scene);
@@ -487,13 +431,16 @@ function SexIcon3D({
         }
       };
     }, [animate, animations, scene]);
+
     useFrame((state, delta) => {
       if (mixer.current && animate) {
         mixer.current.update(delta);
       }
     });
+
     return <primitive object={scene} />;
   }
+
   return (
     <div className={className + ' flex items-center justify-center'}>
       <Canvas camera={{ fov: 55, position: [0, 2, 3] }}>
@@ -530,7 +477,7 @@ export function DiagnosisForm({
   const selectedLocations = form.watch('symptoms.location') || [];
   const currentAge = form.watch('profile.age');
 
-  const { IconComponent: AgeIconToRender, label: ageLabel } = getAgeIconAndLabel(currentAge);
+  const { iconPath: AgeIconToRender, label: ageLabel } = getAgeIconAndLabel(currentAge);
 
   const formErrors: FieldErrors<FormValues> = form.formState.errors;
 
@@ -538,9 +485,11 @@ export function DiagnosisForm({
     const currentLocs = form.getValues('symptoms.location');
     if (!Array.isArray(currentLocs) || !selectedSex || selectedSex === 'other') return;
 
+    const currentAnatomyParts = selectedSex === 'male' ? maleBodyRegions : femaleBodyRegions;
+
     let changed = false;
     const newLocations = currentLocs.filter((locId) => {
-      const partDefinition = anatomyParts.find((p) => p.id === locId);
+      const partDefinition = currentAnatomyParts.find((p: BodyPart) => p.id === locId);
       if (partDefinition?.sex && partDefinition.sex !== selectedSex) {
         changed = true;
         return false;
@@ -696,7 +645,13 @@ export function DiagnosisForm({
                     </FormLabel>
                     <div className="flex items-center gap-4 pt-2">
                       <div className="flex w-1/4 flex-shrink-0 items-center justify-center">
-                        <AgeIconToRender />
+                        <Image
+                          src={AgeIconToRender}
+                          alt="Age Icon"
+                          width={80}
+                          height={80}
+                          className="object-contain transition-opacity duration-300"
+                        />
                       </div>
                       <div className="flex-1 space-y-2">
                         <FormControl>
@@ -1378,14 +1333,13 @@ export function DiagnosisForm({
                         Duration <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
-                        <div className="relative flex items-center space-x-2">
+                        <div className="relative flex gap-2">
                           <Input
                             type="number"
                             placeholder="e.g., 2"
-                            value={durationValue.number}
+                            {...field}
+                            value={durationValue.number === '' ? '' : durationValue.number}
                             onChange={handleNumberChange}
-                            min={1} // Ensures the input cannot go below 1
-                            max={66} // Ensures the input cannot go above 66
                             className={cn(
                               'flex-grow',
                               hasError && 'border-destructive focus-visible:ring-destructive',
@@ -1411,9 +1365,6 @@ export function DiagnosisForm({
                           </Select>
                         </div>
                       </FormControl>
-                      {hasError && (
-                        <XIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
-                      )}
                       <FormMessage />
                     </FormItem>
                   );

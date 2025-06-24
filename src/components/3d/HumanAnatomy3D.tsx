@@ -32,7 +32,7 @@ interface BodyPart {
 }
 
 // Define body regions with approximate coordinates (these will likely need fine-tuning based on your GLB)
-const maleBodyRegions: BodyPart[] = [
+export const maleBodyRegions: BodyPart[] = [
   // General regions (unisex)
   { id: 'head', label: 'Head', center: [0, 1.8, 0], radius: 0.13 },
   { id: 'neck', label: 'Neck', center: [0, 1.6, -0.015], radius: 0.08 },
@@ -53,7 +53,7 @@ const maleBodyRegions: BodyPart[] = [
   { id: 'genitals-male', label: 'Genitals (Male)', center: [0, 0.85, 0.1], radius: 0.1, sex: 'male' },
 ];
 
-const femaleBodyRegions: BodyPart[] = [
+export const femaleBodyRegions: BodyPart[] = [
   // General regions (unisex)
   { id: 'head', label: 'Head', center: [0, 1.65, 0], radius: 0.11 },
   { id: 'neck', label: 'Neck', center: [0, 1.5, -0.01], radius: 0.07 },
