@@ -1,6 +1,6 @@
 # AIDOC - AI-Powered Medical Diagnosis Assistant
 
-![AIDOC Logo](icon-512x512.webp)
+![AIDOC Logo](public/icon-512x512.webp)
 
 ## Description
 
