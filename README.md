@@ -70,7 +70,7 @@ Once the application is running:
 
 ## Live Demo
 
-[Link to your deployed application here (e.g., https://aidoc.vercel.app)]
+[https://studio--aidoc-ze7io.us-central1.hosted.app/]
 
 ## Contributing
 
