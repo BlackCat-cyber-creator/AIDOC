@@ -10,7 +10,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,94 +20,203 @@ import { patientProfileSchema, PatientProfile } from '@/lib/schema';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { SexIcon3D } from '@/components/3d/SexIcon3D';
-import { Loader2, Crown, Image as ImageIcon } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTranslation } from 'react-i18next';
 
-const commonChronicConditions = [
-  'Type 2 Diabetes',
-  'Hypertension',
-  'Asthma',
-  'Coronary Artery Disease',
-  'Chronic Kidney Disease',
-  'Rheumatoid Arthritis',
-  "Crohn's Disease",
-  'Ulcerative Colitis',
-  'Hypothyroidism',
-  'Migraine',
-  'Osteoarthritis',
-  'Depression',
-  'Anxiety Disorder',
-  'Fibromyalgia',
-  'GERD',
-  'IBS',
-  'COPD',
-  'Psoriasis',
-  'Epilepsy',
-  'Multiple Sclerosis',
-  "Parkinson's Disease",
-  "Alzheimer's Disease",
-  'Obesity',
-  'Sleep Apnea',
-  'PCOS',
-  'Endometriosis',
-  'Celiac Disease',
-  'Lupus',
-  'Anemia',
-].sort();
-
-const commonMedications = [
-  'Lisinopril',
-  'Metformin',
-  'Atorvastatin',
-  'Levothyroxine',
-  'Amlodipine',
-  'Omeprazole',
-  'Albuterol',
-  'Hydrochlorothiazide',
-  'Gabapentin',
-  'Sertraline',
-  'Losartan',
-  'Aspirin',
-  'Ibuprofen',
-  'Acetaminophen',
-  'Amoxicillin',
-  'Azithromycin',
-  'Prednisone',
-  'Insulin',
-  'Duloxetine',
-  'Escitalopram',
-  'Furosemide',
-  'Simvastatin',
-  'Tramadol',
-  'Vitamin D',
-].sort();
-
-const commonAllergies = [
-  'Penicillin',
-  'Amoxicillin',
-  'Sulfa Drugs',
-  'Codeine',
-  'Morphine',
-  'Aspirin',
-  'Ibuprofen',
-  'Latex',
-  'Peanuts',
-  'Tree Nuts',
-  'Shellfish',
-  'Dairy',
-  'Eggs',
-  'Soy',
-  'Wheat',
-  'Gluten',
-  'Dust Mites',
-  'Pollen',
-  'Animal Dander',
-  'Bee Stings',
-  'Nickel',
-  'Iodine',
-].sort();
+// Comprehensive localized medical data
+const medicalData: Record<string, { conditions: string[]; meds: string[]; allergies: string[] }> = {
+  en: {
+    conditions: [
+      'Diabetes',
+      'Hypertension',
+      'Asthma',
+      'Heart Disease',
+      'CKD',
+      'Arthritis',
+      'Migraine',
+      'Anxiety',
+      'Depression',
+      'Obesity',
+      'Epilepsy',
+      'COPD',
+      'Lupus',
+      'Anemia',
+    ],
+    meds: [
+      'Metformin',
+      'Lisinopril',
+      'Atorvastatin',
+      'Amlodipine',
+      'Omeprazole',
+      'Albuterol',
+      'Gabapentin',
+      'Sertraline',
+      'Aspirin',
+      'Ibuprofen',
+      'Acetaminophen',
+      'Amoxicillin',
+      'Insulin',
+    ],
+    allergies: [
+      'Penicillin',
+      'Peanuts',
+      'Shellfish',
+      'Latex',
+      'Dust Mites',
+      'Pollen',
+      'Bee Stings',
+      'Dairy',
+      'Eggs',
+      'Soy',
+      'Wheat',
+      'Iodine',
+    ],
+  },
+  id: {
+    conditions: [
+      'Diabetes',
+      'Hipertensi',
+      'Asma',
+      'Penyakit Jantung',
+      'Gagal Ginjal',
+      'Artritis',
+      'Migrain',
+      'Kecemasan',
+      'Depresi',
+      'Obesitas',
+      'Epilepsi',
+      'PPOK',
+      'Lupus',
+      'Anemia',
+    ],
+    meds: [
+      'Metformin',
+      'Lisinopril',
+      'Atorvastatin',
+      'Amlodipine',
+      'Omeprazole',
+      'Salbutamol',
+      'Gabapentin',
+      'Sertraline',
+      'Aspirin',
+      'Ibuprofen',
+      'Parasetamol',
+      'Amoksisilin',
+      'Insulin',
+    ],
+    allergies: [
+      'Penisilin',
+      'Kacang-kacangan',
+      'Seafood',
+      'Lateks',
+      'Debu',
+      'Serbuk Sari',
+      'Sengatan Lebah',
+      'Produk Susu',
+      'Telur',
+      'Kedelai',
+      'Gandum',
+      'Iodium',
+    ],
+  },
+  es: {
+    conditions: [
+      'Diabetes',
+      'Hipertensión',
+      'Asma',
+      'Cardiopatía',
+      'ERC',
+      'Artritis',
+      'Migraña',
+      'Ansiedad',
+      'Depresión',
+      'Obesidad',
+      'Epilepsia',
+      'EPOC',
+      'Lupus',
+      'Anemia',
+    ],
+    meds: [
+      'Metformina',
+      'Lisinopril',
+      'Atorvastatina',
+      'Amlodipino',
+      'Omeprazol',
+      'Albuterol',
+      'Gabapentina',
+      'Sertralina',
+      'Aspirina',
+      'Ibuprofeno',
+      'Acetaminofén',
+      'Amoxicilina',
+      'Insulina',
+    ],
+    allergies: [
+      'Penicilina',
+      'Maní',
+      'Mariscos',
+      'Látex',
+      'Ácaros',
+      'Polen',
+      'Picadura de abeja',
+      'Lácteos',
+      'Huevos',
+      'Soya',
+      'Trigo',
+      'Yodo',
+    ],
+  },
+  fr: {
+    conditions: [
+      'Diabète',
+      'Hypertension',
+      'Asthme',
+      'Maladie Cardiaque',
+      'Insuffisance Rénale',
+      'Arthrite',
+      'Migraine',
+      'Anxiété',
+      'Dépression',
+      'Obésité',
+      'Épilepsie',
+      'BPCO',
+      'Lupus',
+      'Anémie',
+    ],
+    meds: [
+      'Metformine',
+      'Lisinopril',
+      'Atorvastatine',
+      'Amlodipine',
+      'Oméprazole',
+      'Albutérol',
+      'Gabapentine',
+      'Sertraline',
+      'Aspirine',
+      'Ibuprofène',
+      'Paracétamol',
+      'Amoxicilline',
+      'Insuline',
+    ],
+    allergies: [
+      'Pénicilline',
+      'Arachides',
+      'Fruits de mer',
+      'Latex',
+      'Acariens',
+      'Pollen',
+      "Piqûre d'abeille",
+      'Produits laitiers',
+      'Oeufs',
+      'Soja',
+      'Blé',
+      'Iode',
+    ],
+  },
+};
 
 const ageIconMap: { [key: string]: string } = {
   infant: '/images/age_icons/infant.webp',
@@ -121,7 +229,7 @@ const ageIconMap: { [key: string]: string } = {
   olderadult: '/images/age_icons/olderadult.webp',
 };
 
-const getAgeIconAndLabel = (ageInput: number | undefined): { iconPath: string; label: string } => {
+const getAgeIconAndLabel = (ageInput: number | undefined, t: any): { iconPath: string; label: string } => {
   const numericAge = ageInput ?? 0;
   let iconKey: keyof typeof ageIconMap;
   if (numericAge === 0) iconKey = 'infant';
@@ -136,14 +244,8 @@ const getAgeIconAndLabel = (ageInput: number | undefined): { iconPath: string; l
 
   let labelText = `${numericAge}`;
   if (numericAge >= 65) labelText = '65+';
-  return { iconPath: ageIconMap[iconKey], label: `Selected Age: ${labelText}` };
+  return { iconPath: ageIconMap[iconKey], label: `${t('age')}: ${labelText}` };
 };
-
-const sexOptions = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'other', label: 'Other' },
-];
 
 interface PatientProfileFormProps {
   onSubmit: (values: PatientProfile) => Promise<void>;
@@ -158,8 +260,12 @@ export function PatientProfileForm({
   initialData,
   isLoading,
   isPremium,
-  submitButtonText = 'Save Profile',
+  submitButtonText,
 }: PatientProfileFormProps) {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language.split('-')[0] || 'en';
+  const langData = medicalData[currentLang] || medicalData.en;
+
   const form = useForm<PatientProfile>({
     resolver: zodResolver(patientProfileSchema),
     defaultValues: initialData || {
@@ -169,13 +275,17 @@ export function PatientProfileForm({
       chronic_conditions: '',
       medications: '',
       allergies: '',
-      imageUrl: '',
     },
   });
 
   const currentAge = form.watch('age');
-  const imageUrl = form.watch('imageUrl');
-  const { iconPath: AgeIconToRender, label: ageLabel } = getAgeIconAndLabel(currentAge);
+  const { iconPath: AgeIconToRender, label: ageLabel } = getAgeIconAndLabel(currentAge, t);
+
+  const sexOptions = [
+    { value: 'male', label: t('male') },
+    { value: 'female', label: t('female') },
+    { value: 'other', label: t('other') },
+  ];
 
   const renderSuggestiveTextarea = (
     name: keyof PatientProfile,
@@ -222,10 +332,10 @@ export function PatientProfileForm({
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                   <Command>
-                    <CommandInput placeholder={`Search ${label.toLowerCase()}...`} />
+                    <CommandInput placeholder={`${t('next')}...`} />
                     <ScrollArea className="h-[200px]">
                       <CommandList>
-                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandEmpty>{t('none')}</CommandEmpty>
                         <CommandGroup>
                           {filteredSuggestions.map((item) => (
                             <CommandItem key={item} value={item} onSelect={() => handleSelectSuggestion(item)}>
@@ -251,54 +361,15 @@ export function PatientProfileForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Patient Details
-              {!isPremium && (
-                <Badge variant="secondary" className="text-xs">
-                  Premium required for photos
-                </Badge>
-              )}
-            </CardTitle>
+            <CardTitle>{t('profiles_title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    Profile Image URL
-                    <Crown className={cn('h-3 w-3', isPremium ? 'text-yellow-500' : 'text-muted-foreground')} />
-                  </FormLabel>
-                  <FormControl>
-                    <div className="flex gap-4 items-center">
-                      <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
-                        {imageUrl ? (
-                          <img src={imageUrl} alt="Preview" className="h-full w-full object-cover" />
-                        ) : (
-                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                        )}
-                      </div>
-                      <Input
-                        placeholder="https://example.com/photo.jpg"
-                        {...field}
-                        disabled={!isPremium}
-                        className="flex-grow"
-                      />
-                    </div>
-                  </FormControl>
-                  {!isPremium && <FormDescription>Upgrade to PRO to add custom patient photos.</FormDescription>}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>{t('name')}</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Jane Doe" {...field} />
                   </FormControl>
@@ -311,7 +382,7 @@ export function PatientProfileForm({
               name="age"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Age</FormLabel>
+                  <FormLabel>{t('age')}</FormLabel>
                   <div className="flex items-center gap-4 pt-2">
                     <div className="flex w-1/4 flex-shrink-0 items-center justify-center">
                       <Image src={AgeIconToRender} alt="Age Icon" width={80} height={80} />
@@ -338,7 +409,7 @@ export function PatientProfileForm({
               name="sex"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Sex</FormLabel>
+                  <FormLabel>{t('sex')}</FormLabel>
                   <FormControl>
                     <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-3">
                       {sexOptions.map((opt) => (
@@ -379,53 +450,26 @@ export function PatientProfileForm({
 
         <Card>
           <CardHeader>
-            <CardTitle>Medical History (Optional)</CardTitle>
+            <CardTitle>{t('medical_history')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {renderSuggestiveTextarea(
               'chronic_conditions',
-              'Chronic Conditions',
-              commonChronicConditions,
+              t('chronic_conditions_label'),
+              langData.conditions,
               'e.g., Type 2 Diabetes'
             )}
-            {renderSuggestiveTextarea('medications', 'Current Medications', commonMedications, 'e.g., Metformin')}
-            {renderSuggestiveTextarea('allergies', 'Allergies', commonAllergies, 'e.g., Penicillin')}
+            {renderSuggestiveTextarea('medications', t('medications_label'), langData.meds, 'e.g., Metformin')}
+            {renderSuggestiveTextarea('allergies', t('allergies'), langData.allergies, 'e.g., Penicillin')}
           </CardContent>
         </Card>
         <div className="flex justify-end">
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {submitButtonText}
+            {submitButtonText || t('save_profile')}
           </Button>
         </div>
       </form>
     </FormProviderComponent>
-  );
-}
-
-// Internal helper component
-function Badge({
-  children,
-  variant = 'default',
-  className = '',
-}: {
-  children: React.ReactNode;
-  variant?: string;
-  className?: string;
-}) {
-  const variants: Record<string, string> = {
-    default: 'bg-primary text-primary-foreground',
-    secondary: 'bg-secondary text-secondary-foreground',
-  };
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-        variants[variant],
-        className
-      )}
-    >
-      {children}
-    </span>
   );
 }

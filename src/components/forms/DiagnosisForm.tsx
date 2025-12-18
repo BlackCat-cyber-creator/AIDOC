@@ -19,7 +19,7 @@ import { Slider } from '@/components/ui/slider';
 import type { FormValues, PatientProfile } from '@/lib/schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Check, X as XIcon, MapPin, ListChecks, ClipboardList, Camera, Crown } from 'lucide-react';
+import { Loader2, Check, X as XIcon, MapPin, ListChecks, ClipboardList, Camera, Crown, Upload } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -27,9 +27,12 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { HumanAnatomy3D } from '@/components/3d/HumanAnatomy3D';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, storage } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { useTranslation } from 'react-i18next';
+import imageCompression from 'browser-image-compression';
 
 const sortedSimplifiedSymptomTypes = [
   { value: 'abdominal-pain-discomfort', label: 'Abdominal Pain / Discomfort' },
@@ -193,14 +196,6 @@ interface DiagnosisFormProps {
   patientProfile: PatientProfile;
 }
 
-const stepTitles = ['Symptom Location(s)', 'Symptom Type(s)', 'Symptom Details'];
-
-const stepIcons: Record<number, React.ElementType> = {
-  0: MapPin,
-  1: ListChecks,
-  2: ClipboardList,
-};
-
 export const DiagnosisForm = React.memo(function DiagnosisForm({
   form,
   onSubmit,
@@ -210,9 +205,19 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
   totalSteps,
   patientProfile,
 }: DiagnosisFormProps) {
+  const { t } = useTranslation();
   const [user] = useAuthState(auth);
   const [isPremium, setIsPremium] = React.useState(false);
+  const [isUploading, setIsUploading] = React.useState(false);
   const [symptomTypePopoverOpen, setSymptomTypePopoverOpen] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const stepTitles = [t('symptom_location'), t('symptom_type'), t('symptom_details')];
+  const stepIcons: Record<number, React.ElementType> = {
+    0: MapPin,
+    1: ListChecks,
+    2: ClipboardList,
+  };
 
   React.useEffect(() => {
     async function checkSubscription() {
@@ -229,6 +234,37 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
   const selectedSex = patientProfile.sex;
   const selectedLocations = form.watch('symptoms.location') || [];
   const imageUrl = form.watch('symptoms.symptomImageUrl');
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploading(true);
+    try {
+      // 1. Compress image
+      const options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
+
+      // 2. Upload to Firebase Storage
+      const storageRef = ref(storage, `users/${user.uid}/symptoms/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, compressedFile);
+
+      // 3. Get Download URL
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // 4. Update form
+      form.setValue('symptoms.symptomImageUrl', downloadURL, { shouldValidate: true });
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Error uploading image. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const filteredSymptomTypesForDropdown = React.useMemo(() => {
     if (!selectedLocations || selectedLocations.length === 0) {
@@ -284,7 +320,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
       >
         <div className="mb-6 rounded-md border bg-muted/30 p-3 text-center">
           <p className="text-sm font-medium text-muted-foreground">
-            Step {currentStep + 1} of {totalSteps}:{' '}
+            {t('step')} {currentStep + 1} {t('of')} {totalSteps}:{' '}
             <span className="font-semibold text-primary">{stepTitles[currentStep]}</span>
           </p>
           <Progress value={((currentStep + 1) / totalSteps) * 100} className="mt-2 h-2 w-full" />
@@ -322,7 +358,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>
-                      Location(s) <span className="text-destructive">*</span>
+                      {t('symptom_location')} <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
                       <div>
@@ -352,8 +388,8 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                                 />
                               </FormControl>
                               <div className="space-y-1 leading-none">
-                                <FormLabel>Skin (General)</FormLabel>
-                                <FormDescription>Symptoms affecting the skin broadly.</FormDescription>
+                                <FormLabel>{t('skin_general')}</FormLabel>
+                                <FormDescription>{t('skin_general_desc')}</FormDescription>
                               </div>
                             </FormItem>
                           )}
@@ -382,7 +418,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>
-                      Type of Symptoms <span className="text-destructive">*</span>
+                      {t('symptom_type')} <span className="text-destructive">*</span>
                     </FormLabel>
                     <Popover open={symptomTypePopoverOpen} onOpenChange={setSymptomTypePopoverOpen}>
                       <PopoverTrigger asChild disabled={selectedLocations.length === 0}>
@@ -408,7 +444,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                               ))
                             ) : (
                               <span className="text-muted-foreground">
-                                {selectedLocations.length ? 'Select symptom types...' : 'Select location(s) first'}
+                                {selectedLocations.length ? `${t('next')}...` : t('symptom_location')}
                               </span>
                             )}
                           </div>
@@ -416,10 +452,10 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                       </PopoverTrigger>
                       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                         <Command>
-                          <CommandInput placeholder="Search symptom types..." />
+                          <CommandInput placeholder={`${t('next')}...`} />
                           <ScrollArea className="h-[200px]">
                             <CommandList>
-                              <CommandEmpty>No results found.</CommandEmpty>
+                              <CommandEmpty>{t('none')}</CommandEmpty>
                               <CommandGroup>
                                 {filteredSymptomTypesForDropdown.map((s) => (
                                   <CommandItem
@@ -469,38 +505,56 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      Upload Photo of Symptom (Optional)
+                      {t('upload_photo')} ({t('optional')})
                       <Crown className={cn('h-3 w-3', isPremium ? 'text-yellow-500' : 'text-muted-foreground')} />
                     </FormLabel>
                     <FormControl>
                       <div className="space-y-4">
-                        <div className="flex gap-4 items-center">
-                          <div className="h-32 w-full border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-muted/30 overflow-hidden">
-                            {imageUrl ? (
-                              <img src={imageUrl} alt="Symptom" className="h-full w-full object-contain" />
-                            ) : (
-                              <div className="text-center p-4">
-                                <Camera className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                                <p className="text-xs text-muted-foreground font-medium">
-                                  Premium users can add a photo for better AI analysis.
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          ref={fileInputRef}
+                          onChange={handleImageUpload}
+                        />
+                        <div
+                          className={cn(
+                            'h-48 w-full border-2 border-dashed rounded-xl flex flex-col items-center justify-center bg-muted/30 overflow-hidden relative transition-all group',
+                            isPremium
+                              ? 'cursor-pointer hover:border-primary hover:bg-primary/5'
+                              : 'opacity-60 cursor-not-allowed grayscale'
+                          )}
+                          onClick={() => isPremium && fileInputRef.current?.click()}
+                        >
+                          {isUploading ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                              <p className="text-xs font-medium animate-pulse">Uploading...</p>
+                            </div>
+                          ) : imageUrl ? (
+                            <>
+                              <img src={imageUrl} alt="Symptom" className="h-full w-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <p className="text-white text-sm font-bold flex items-center gap-2">
+                                  <Upload className="h-4 w-4" /> Change Photo
                                 </p>
                               </div>
-                            )}
-                          </div>
+                            </>
+                          ) : (
+                            <div className="text-center p-6 space-y-2">
+                              <Camera className="h-10 w-10 mx-auto text-muted-foreground group-hover:text-primary transition-colors" />
+                              <div>
+                                <p className="text-sm font-semibold">{t('upload_photo')}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {isPremium ? 'Use camera or select file' : t('upgrade_pro')}
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <Input
-                          placeholder="Paste image URL here (e.g., from a cloud drive)"
-                          {...field}
-                          disabled={!isPremium}
-                          className="w-full"
-                        />
                       </div>
                     </FormControl>
-                    {!isPremium && (
-                      <FormDescription>
-                        PRO members can include photos of rashes, swelling, etc., for more accurate AI detection.
-                      </FormDescription>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -512,7 +566,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Severity (1-10) <span className="text-destructive">*</span>
+                      {t('severity')} (1-10) <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
                       <div className="flex items-center gap-4 pt-2">
@@ -535,28 +589,33 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                 control={form.control}
                 name="symptoms.duration"
                 render={({ field }) => {
-                  const [num, unit] = (field.value || '2 days').split(' ');
+                  const rawValue = field.value || '';
+                  const parts = rawValue.split(' ');
+                  const num = parts[0] || '';
+                  const unit = parts[1] || 'days';
+
                   return (
                     <FormItem>
                       <FormLabel>
-                        Duration <span className="text-destructive">*</span>
+                        {t('duration')} <span className="text-destructive">*</span>
                       </FormLabel>
                       <div className="flex gap-2">
                         <Input
                           type="number"
+                          placeholder="e.g., 2"
                           value={num}
-                          onChange={(e) => field.onChange(`${e.target.value} ${unit || 'days'}`)}
+                          onChange={(e) => field.onChange(`${e.target.value} ${unit}`)}
                           className="flex-grow"
                         />
-                        <Select value={unit || 'days'} onValueChange={(v) => field.onChange(`${num || '0'} ${v}`)}>
+                        <Select value={unit} onValueChange={(v) => field.onChange(`${num || '0'} ${v}`)}>
                           <SelectTrigger className="w-[120px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="days">Day(s)</SelectItem>
-                            <SelectItem value="weeks">Week(s)</SelectItem>
-                            <SelectItem value="months">Month(s)</SelectItem>
-                            <SelectItem value="years">Year(s)</SelectItem>
+                            <SelectItem value="days">{t('days')}</SelectItem>
+                            <SelectItem value="weeks">{t('weeks')}</SelectItem>
+                            <SelectItem value="months">{t('months')}</SelectItem>
+                            <SelectItem value="years">{t('years')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -571,17 +630,17 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Onset <span className="text-destructive">*</span>
+                      {t('onset')} <span className="text-destructive">*</span>
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select onset" />
+                          <SelectValue placeholder={t('onset')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="sudden">Sudden</SelectItem>
-                        <SelectItem value="gradual">Gradual</SelectItem>
+                        <SelectItem value="sudden">{t('sudden')}</SelectItem>
+                        <SelectItem value="gradual">{t('gradual')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -593,7 +652,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                 name="symptoms.radiation"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Radiation (if any)</FormLabel>
+                    <FormLabel>{t('radiation')}</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., To the left arm" {...field} />
                     </FormControl>
@@ -606,7 +665,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                 name="symptoms.triggers"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Triggers (Optional)</FormLabel>
+                    <FormLabel>{t('triggers')}</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="e.g., Certain foods, Stress"
@@ -623,7 +682,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                 name="symptoms.extras"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Extra Information (Optional)</FormLabel>
+                    <FormLabel>{t('extra_info')}</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="e.g., Sharp pain, dull ache"
@@ -643,22 +702,22 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
           <div className="w-[100px]">
             {currentStep > 0 && (
               <Button type="button" variant="outline" onClick={handlePrev}>
-                Previous
+                {t('previous')}
               </Button>
             )}
           </div>
           {currentStep < totalSteps - 1 ? (
             <Button type="button" onClick={handleNext}>
-              Next
+              {t('next')}
             </Button>
           ) : (
-            <Button type="submit" disabled={isLoading || !form.formState.isValid}>
+            <Button type="submit" disabled={isLoading || !form.formState.isValid || isUploading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Getting Diagnosis...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('analyzing')}
                 </>
               ) : (
-                'Get Diagnosis'
+                t('get_diagnosis')
               )}
             </Button>
           )}

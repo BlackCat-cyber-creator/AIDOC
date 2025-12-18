@@ -3,7 +3,7 @@
 import { AppIcon3D } from '../3d/AppIcon3D';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Iridescence from '../Iridescence';
-import { UserCircle, LogOut, CreditCard, User, Crown } from 'lucide-react';
+import { UserCircle, LogOut, CreditCard, User, Crown, Languages, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,6 +12,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -20,12 +24,26 @@ import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
+
+const languages = [
+  { code: 'en', name: 'English' },
+  { code: 'id', name: 'Bahasa Indonesia' },
+  { code: 'es', name: 'Español' },
+  { code: 'fr', name: 'Français' },
+];
 
 export function AppHeader() {
   const isMobile = useIsMobile();
   const [user] = useAuthState(auth);
   const router = useRouter();
+  const { i18n, t } = useTranslation();
   const [isPremium, setIsPremium] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function checkSubscription() {
@@ -43,6 +61,18 @@ export function AppHeader() {
     await signOut(auth);
     router.push('/');
   };
+
+  const changeLanguage = (code: string) => {
+    i18n.changeLanguage(code);
+  };
+
+  const currentLanguageName = languages.find((l) => l.code === i18n.language)?.name || 'Language';
+
+  if (!mounted) {
+    return (
+      <header className="py-0 mb-6 border-b border-border relative h-21 sm:h-25 md:h-29 lg:h-33 bg-muted/10"></header>
+    );
+  }
 
   return (
     <header className="py-0 mb-6 border-b border-border relative h-21 sm:h-25 md:h-29 lg:h-33">
@@ -74,7 +104,7 @@ export function AppHeader() {
               <span className="sr-only">User menu</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{user?.displayName || 'User'}</p>
@@ -82,25 +112,52 @@ export function AppHeader() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex justify-between items-center cursor-default">
-              <span className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4" /> Subscription
-              </span>
+
+            <DropdownMenuItem
+              onClick={() => router.push('/billing')}
+              className="cursor-pointer flex items-center justify-between"
+            >
+              <div className="flex items-center">
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>{t('subscription')}</span>
+              </div>
               <Badge
                 variant={isPremium ? 'default' : 'secondary'}
-                className={isPremium ? 'bg-yellow-500 hover:bg-yellow-600' : ''}
+                className={isPremium ? 'bg-yellow-500 hover:bg-yellow-600 h-5 text-[10px]' : 'h-5 text-[10px]'}
               >
                 {isPremium ? 'PRO' : 'FREE'}
               </Badge>
             </DropdownMenuItem>
+
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger className="cursor-pointer">
+                <Languages className="mr-2 h-4 w-4" />
+                <span>{currentLanguageName}</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent className="w-48">
+                  {languages.map((lang) => (
+                    <DropdownMenuItem
+                      key={lang.code}
+                      onClick={() => changeLanguage(lang.code)}
+                      className="flex items-center justify-between cursor-pointer"
+                    >
+                      {lang.name}
+                      {i18n.language === lang.code && <Check className="h-4 w-4" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+
             <DropdownMenuItem onClick={() => router.push('/profiles')} className="cursor-pointer">
               <User className="mr-2 h-4 w-4" />
-              <span>Profiles</span>
+              <span>{t('profiles_title')}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Logout</span>
+              <span>{t('logout')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

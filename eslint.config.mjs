@@ -6,7 +6,7 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 
 export default tseslint.config(
   {
-    ignores: ['.next/', 'node_modules/'],
+    ignores: ['.next/', 'node_modules/', 'public/*.js', 'android/'], // Ignore generated JS files and android folder
   },
   // Base ESLint recommended rules
   eslint.configs.recommended,
@@ -18,7 +18,7 @@ export default tseslint.config(
   // TypeScript ESLint recommended rules
   ...tseslint.configs.recommended,
 
-  // Prettier recommended rules (to disable conflicting ESLint rules)
+  // Prettier recommended rules
   eslintPluginPrettierRecommended,
 
   {
@@ -35,31 +35,24 @@ export default tseslint.config(
         ecmaFeatures: {
           jsx: true,
         },
-        // Add non-standard file extensions that TypeScript should be able to parse
         extraFileExtensions: ['.json', '.md'],
       },
     },
     rules: {
-      // Turn off `no-unused-vars` error and make it a warning instead for convenience.
       '@typescript-eslint/no-unused-vars': 'warn',
-      // Make no-explicit-any a warning for flexibility
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-require-imports': 'off', // Allow require if needed
+      '@next/next/no-img-element': 'off', // Allow <img> for now
     },
   },
   {
     files: ['jest.config.js', 'jest.setup.js', 'next.config.ts', 'tailwind.config.ts'],
-    // Do not use parserOptions.project for these files, as they are not part of the main TS project
     languageOptions: {
       sourceType: 'commonjs',
-      // If these files are JS, disable TypeScript parser rules here.
-      // For .ts files that are configuration, we handle them differently.
     },
     rules: {
-      // Disable no-undef for CommonJS global variables like 'module' and 'require'
       'no-undef': 'off',
-      // Disable this rule for CommonJS files that use require()
       '@typescript-eslint/no-require-imports': 'off',
-      // Other rules from your main config might apply and cause issues, you might need to disable them here.
     },
   }
 );

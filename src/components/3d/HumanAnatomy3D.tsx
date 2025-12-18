@@ -15,6 +15,7 @@ import {
   Object3D,
 } from 'three';
 import { InteractiveOrbitControls } from './InteractiveOrbitControls';
+import { useTranslation } from 'react-i18next';
 
 interface HumanAnatomy3DProps {
   selectedSex: 'male' | 'female' | 'other';
@@ -25,57 +26,56 @@ interface HumanAnatomy3DProps {
 
 interface BodyPart {
   id: string;
-  label: string;
+  label: string; // This is now a translation key
   center: [number, number, number];
   radius: number;
   sex?: 'male' | 'female';
 }
 
 export const maleBodyRegions: BodyPart[] = [
-  { id: 'head', label: 'Head', center: [0, 1.8, 0], radius: 0.13 },
-  { id: 'neck', label: 'Neck', center: [0, 1.6, -0.015], radius: 0.08 },
-  { id: 'chest', label: 'Chest', center: [0, 1.45, 0.1], radius: 0.15 },
-  { id: 'abdomen', label: 'Abdomen', center: [0, 1.2, 0.1], radius: 0.15 },
-  { id: 'pelvis', label: 'Pelvis', center: [0, 1, 0], radius: 0.2 },
-  { id: 'left-shoulder', label: 'L. Shoulder', center: [0.25, 1.5, 0], radius: 0.15 },
-  { id: 'right-shoulder', label: 'R. Shoulder', center: [-0.25, 1.5, 0], radius: 0.15 },
-  { id: 'left-arm', label: 'L. Arm', center: [0.55, 1.5, 0], radius: 0.17 },
-  { id: 'right-arm', label: 'R. Arm', center: [-0.55, 1.5, 0], radius: 0.17 },
-  { id: 'left-hand', label: 'L. Hand', center: [0.8, 1.5, 0], radius: 0.1 },
-  { id: 'right-hand', label: 'R. Hand', center: [-0.8, 1.5, 0], radius: 0.1 },
-  { id: 'left-leg', label: 'L. Leg', center: [0.15, 0.4, 0], radius: 0.2 },
-  { id: 'right-leg', label: 'R. Leg', center: [-0.15, 0.4, 0], radius: 0.2 },
-  { id: 'left-foot', label: 'L. Foot', center: [0.1, 0.1, 0.1], radius: 0.1 },
-  { id: 'right-foot', label: 'R. Foot', center: [-0.1, 0.1, 0.1], radius: 0.1 },
-  { id: 'back', label: 'Back', center: [0, 1.35, -0.1], radius: 0.2 },
-  { id: 'genitals-male', label: 'Genitals (Male)', center: [0, 0.85, 0.1], radius: 0.1, sex: 'male' },
+  { id: 'head', label: 'head', center: [0, 1.8, 0], radius: 0.13 },
+  { id: 'neck', label: 'neck', center: [0, 1.6, -0.015], radius: 0.08 },
+  { id: 'chest', label: 'chest', center: [0, 1.45, 0.1], radius: 0.15 },
+  { id: 'abdomen', label: 'abdomen', center: [0, 1.2, 0.1], radius: 0.15 },
+  { id: 'pelvis', label: 'pelvis', center: [0, 1, 0], radius: 0.2 },
+  { id: 'left-shoulder', label: 'left_shoulder', center: [0.25, 1.5, 0], radius: 0.15 },
+  { id: 'right-shoulder', label: 'right_shoulder', center: [-0.25, 1.5, 0], radius: 0.15 },
+  { id: 'left-arm', label: 'left_arm', center: [0.55, 1.5, 0], radius: 0.17 },
+  { id: 'right-arm', label: 'right_arm', center: [-0.55, 1.5, 0], radius: 0.17 },
+  { id: 'left-hand', label: 'left_hand', center: [0.8, 1.5, 0], radius: 0.1 },
+  { id: 'right-hand', label: 'right_hand', center: [-0.8, 1.5, 0], radius: 0.1 },
+  { id: 'left-leg', label: 'left_leg', center: [0.15, 0.4, 0], radius: 0.2 },
+  { id: 'right-leg', label: 'right_leg', center: [-0.15, 0.4, 0], radius: 0.2 },
+  { id: 'left-foot', label: 'left_foot', center: [0.1, 0.1, 0.1], radius: 0.1 },
+  { id: 'right-foot', label: 'right_foot', center: [-0.1, 0.1, 0.1], radius: 0.1 },
+  { id: 'back', label: 'back', center: [0, 1.35, -0.1], radius: 0.2 },
+  { id: 'genitals-male', label: 'genitals_male', center: [0, 0.85, 0.1], radius: 0.1, sex: 'male' },
 ];
 
 export const femaleBodyRegions: BodyPart[] = [
-  { id: 'head', label: 'Head', center: [0, 1.65, 0], radius: 0.11 },
-  { id: 'neck', label: 'Neck', center: [0, 1.5, -0.01], radius: 0.07 },
-  { id: 'chest', label: 'Chest', center: [0, 1.35, 0.03], radius: 0.14 },
-  { id: 'abdomen', label: 'Abdomen', center: [0, 1.1, 0.08], radius: 0.13 },
-  { id: 'pelvis', label: 'Pelvis', center: [0, 1, 0], radius: 0.16 },
-  { id: 'left-shoulder', label: 'L. Shoulder', center: [0.22, 1.4, 0], radius: 0.12 },
-  { id: 'right-shoulder', label: 'R. Shoulder', center: [-0.22, 1.4, 0], radius: 0.12 },
-  { id: 'left-arm', label: 'L. Arm', center: [0.5, 1.4, 0], radius: 0.15 },
-  { id: 'right-arm', label: 'R. Arm', center: [-0.5, 1.4, 0], radius: 0.15 },
-  { id: 'left-hand', label: 'L. Hand', center: [0.75, 1.4, 0], radius: 0.08 },
-  { id: 'right-hand', label: 'R. Hand', center: [-0.75, 1.4, 0], radius: 0.08 },
-  { id: 'left-leg', label: 'L. Leg', center: [0.15, 0.4, 0], radius: 0.15 },
-  { id: 'right-leg', label: 'R. Leg', center: [-0.15, 0.4, 0], radius: 0.15 },
-  { id: 'left-foot', label: 'L. Foot', center: [0.1, 0.1, 0.03], radius: 0.08 },
-  { id: 'right-foot', label: 'R. Foot', center: [-0.1, 0.1, 0.03], radius: 0.08 },
-  { id: 'back', label: 'Back', center: [0, 1.25, -0.1], radius: 0.18 },
-  { id: 'breast', label: 'Breast', center: [0, 1.3, 0.13], radius: 0.1, sex: 'female' },
-  { id: 'genitals-female', label: 'Genitals (Female)', center: [0, 0.85, 0], radius: 0.08, sex: 'female' },
+  { id: 'head', label: 'head', center: [0, 1.65, 0], radius: 0.11 },
+  { id: 'neck', label: 'neck', center: [0, 1.5, -0.01], radius: 0.07 },
+  { id: 'chest', label: 'chest', center: [0, 1.35, 0.03], radius: 0.14 },
+  { id: 'abdomen', label: 'abdomen', center: [0, 1.1, 0.08], radius: 0.13 },
+  { id: 'pelvis', label: 'pelvis', center: [0, 1, 0], radius: 0.16 },
+  { id: 'left-shoulder', label: 'left_shoulder', center: [0.22, 1.4, 0], radius: 0.12 },
+  { id: 'right-shoulder', label: 'right_shoulder', center: [-0.22, 1.4, 0], radius: 0.12 },
+  { id: 'left-arm', label: 'left_arm', center: [0.5, 1.4, 0], radius: 0.15 },
+  { id: 'right-arm', label: 'right_arm', center: [-0.5, 1.4, 0], radius: 0.15 },
+  { id: 'left-hand', label: 'left_hand', center: [0.75, 1.4, 0], radius: 0.08 },
+  { id: 'right-hand', label: 'right_hand', center: [-0.75, 1.4, 0], radius: 0.08 },
+  { id: 'left-leg', label: 'left_leg', center: [0.15, 0.4, 0], radius: 0.15 },
+  { id: 'right-leg', label: 'right_leg', center: [-0.15, 0.4, 0], radius: 0.15 },
+  { id: 'left-foot', label: 'left_foot', center: [0.1, 0.1, 0.03], radius: 0.08 },
+  { id: 'right-foot', label: 'right_foot', center: [-0.1, 0.1, 0.03], radius: 0.08 },
+  { id: 'back', label: 'back', center: [0, 1.25, -0.1], radius: 0.18 },
+  { id: 'breast', label: 'breast', center: [0, 1.3, 0.13], radius: 0.1, sex: 'female' },
+  { id: 'genitals-female', label: 'genitals_female', center: [0, 0.85, 0], radius: 0.08, sex: 'female' },
 ];
 
 const AnatomyModel = React.memo(
   ({
     modelPath,
-    bodyRegions,
     onModelLoaded,
   }: {
     modelPath: string;
@@ -159,6 +159,7 @@ AnatomyModel.displayName = 'AnatomyModel';
 
 export const HumanAnatomy3D = React.memo(
   ({ selectedSex, selectedLocations, onLocationToggle, disabled = false }: HumanAnatomy3DProps) => {
+    const { t } = useTranslation();
     const modelPath = selectedSex === 'male' ? '/models/male_anatomy.glb' : '/models/female_anatomy.glb';
     const currentBodyRegions = selectedSex === 'male' ? maleBodyRegions : femaleBodyRegions;
     const filteredBodyRegions = currentBodyRegions.filter((region) => !region.sex || region.sex === selectedSex);
@@ -237,7 +238,7 @@ export const HumanAnatomy3D = React.memo(
                       handleLocationToggle(part.id);
                     }}
                   >
-                    {part.label}
+                    {t(part.label)}
                   </button>
                 </Html>
               );

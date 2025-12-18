@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { User, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
@@ -54,6 +55,7 @@ const DiagnosisResult = dynamic(
 function ClientPageContent() {
   const [patientProfile, setPatientProfile] = useState<PatientProfile | null>(null);
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
     try {
@@ -86,14 +88,13 @@ function ClientPageContent() {
           <CardHeader>
             <CardTitle className="flex items-center justify-center gap-2">
               <AlertTriangle className="h-6 w-6 text-destructive" />
-              No Profile Selected
+              {t('no_profile_selected')}
             </CardTitle>
-            <CardDescription>A patient profile must be selected to begin a diagnosis.</CardDescription>
+            <CardDescription>{t('profiles_desc')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Please go back to the profiles page and choose a patient.</p>
             <Link href="/profiles" className="mt-4 inline-block">
-              <Button>Go to Profiles</Button>
+              <Button>{t('back_to_profiles')}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -108,7 +109,7 @@ function ClientPageContent() {
         <div className="mb-6 flex items-center justify-between">
           <Button variant="ghost" onClick={() => router.push('/profiles')} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back to Profiles
+            {t('back_to_profiles')}
           </Button>
         </div>
 
@@ -118,9 +119,11 @@ function ClientPageContent() {
               <User className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-xl">Diagnosing: {patientProfile.name}</CardTitle>
+              <CardTitle className="text-xl capitalize">
+                {t('start_diagnosis')}: {patientProfile.name}
+              </CardTitle>
               <CardDescription>
-                {patientProfile.age} years old • {patientProfile.sex}
+                {patientProfile.age} {t('age')} • {t(patientProfile.sex)}
               </CardDescription>
             </div>
           </CardHeader>

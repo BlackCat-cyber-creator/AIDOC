@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AIDOC</string>
+    <string name="title_activity_main">AIDOC</string>
+    <string name="package_name">com.aidoc.app</string>
+    <string name="custom_url_scheme">com.aidoc.app</string>
+</resources>
