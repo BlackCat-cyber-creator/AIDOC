@@ -23,7 +23,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="192x192" href="/apple-touch-icon.webp" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="light" forceTheme="light" disableTransitionOnChange>
           {children}
           <Toaster />
         </ThemeProvider>

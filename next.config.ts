@@ -22,11 +22,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withBundleAnalyzer({
+// We use 'any' to bypass the version mismatch between Next.js core types and the next-pwa plugin types.
+const configWithPWA = withPWA({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+})(nextConfig as any);
+
+const configWithBundleAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
-})(
-  withPWA({
-    dest: 'public',
-    disable: false,
-  })(nextConfig)
-);
+})(configWithPWA as any);
+
+export default configWithBundleAnalyzer;

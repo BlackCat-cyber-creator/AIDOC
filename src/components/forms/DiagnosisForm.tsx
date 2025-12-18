@@ -3,7 +3,7 @@
 import * as React from 'react';
 import type { UseFormReturn, FieldPath, FieldErrors } from 'react-hook-form';
 import {
-  Form as FormProviderComponent, // Renamed for clarity
+  Form as FormProviderComponent,
   FormControl,
   FormDescription,
   FormField,
@@ -16,10 +16,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import type { FormValues } from '@/lib/schema';
+import type { FormValues, PatientProfile } from '@/lib/schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Check, X as XIcon, IdCard, MapPin, ListChecks, ClipboardList } from 'lucide-react';
+import { Loader2, Check, X as XIcon, MapPin, ListChecks, ClipboardList, Camera, Crown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -27,109 +27,9 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { HumanAnatomy3D } from '@/components/3d/HumanAnatomy3D';
-import { AppIcon3D } from '@/components/3d/AppIcon3D';
-import { Suspense } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { useGLTF, OrbitControls } from '@react-three/drei';
-import { AnimationMixer } from 'three';
-import Image from 'next/image';
-import { maleBodyRegions, femaleBodyRegions } from '@/components/3d/HumanAnatomy3D';
-import { SexIcon3D } from '@/components/3d/SexIcon3D';
-
-interface BodyPart {
-  id: string;
-  label: string;
-  center: [number, number, number];
-  radius: number;
-  sex?: 'male' | 'female';
-}
-
-const ageIconMap: { [key: string]: string } = {
-  infant: '/images/age_icons/infant.webp',
-  toddler: '/images/age_icons/toddler.webp',
-  preschooler: '/images/age_icons/preschooler.webp',
-  schoolage: '/images/age_icons/schoolage.webp',
-  adolescent: '/images/age_icons/adolescent.webp',
-  youngadult: '/images/age_icons/youngadult.webp',
-  middleageadult: '/images/age_icons/middleageadult.webp',
-  olderadult: '/images/age_icons/olderadult.webp',
-};
-
-const getAgeIconAndLabel = (ageInput: number | string | undefined): { iconPath: string; label: string } => {
-  const numericAge =
-    typeof ageInput === 'string' ? parseInt(ageInput, 10) : typeof ageInput === 'number' ? ageInput : 0;
-
-  let iconKey: keyof typeof ageIconMap;
-  if (numericAge === 0) iconKey = 'infant';
-  else if (numericAge >= 1 && numericAge <= 3) iconKey = 'toddler';
-  else if (numericAge >= 4 && numericAge <= 5) iconKey = 'preschooler';
-  else if (numericAge >= 6 && numericAge <= 12) iconKey = 'schoolage';
-  else if (numericAge >= 13 && numericAge <= 18) iconKey = 'adolescent';
-  else if (numericAge >= 19 && numericAge <= 40) iconKey = 'youngadult';
-  else if (numericAge >= 41 && numericAge <= 64) iconKey = 'middleageadult';
-  else if (numericAge >= 65) iconKey = 'olderadult';
-  else iconKey = 'youngadult';
-
-  let labelText = `${numericAge}`;
-  if (numericAge >= 65) {
-    labelText = '65+';
-  }
-  return { iconPath: ageIconMap[iconKey], label: `Selected Age: ${labelText}` };
-};
-
-const MaleSexIcon = () => (
-  <svg
-    width="48"
-    height="48"
-    viewBox="0 0 24 24"
-    strokeWidth="1.5"
-    stroke="currentColor"
-    fill="none"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="text-primary group-aria-checked:text-primary"
-  >
-    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-    <circle cx="10" cy="14" r="5" className="group-aria-checked:fill-primary/20" />
-    <line x1="10" y1="4" x2="10" y2="9" />
-    <line x1="13" y1="7" x2="7" y2="7" />
-  </svg>
-);
-const FemaleSexIcon = () => (
-  <svg
-    width="48"
-    height="48"
-    viewBox="0 0 24 24"
-    strokeWidth="1.5"
-    stroke="currentColor"
-    fill="none"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="text-primary group-aria-checked:text-primary"
-  >
-    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-    <circle cx="12" cy="9" r="5" className="group-aria-checked:fill-primary/20" />
-    <line x1="12" y1="14" x2="12" y2="21" />
-    <line x1="9" y1="18" x2="15" y2="18" />
-  </svg>
-);
-const OtherSexIcon = () => (
-  <svg
-    width="48"
-    height="48"
-    viewBox="0 0 24 24"
-    strokeWidth="1.5"
-    stroke="currentColor"
-    fill="none"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="text-primary group-aria-checked:text-primary"
-  >
-    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-    <circle cx="12" cy="12" r="4" className="group-aria-checked:fill-primary/20" />
-    <path d="M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18" strokeDasharray="3 3" />
-  </svg>
-);
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 const sortedSimplifiedSymptomTypes = [
   { value: 'abdominal-pain-discomfort', label: 'Abdominal Pain / Discomfort' },
@@ -283,105 +183,6 @@ const symptomTypeToLocationMapping: Record<string, string[]> = {
   'back-pain': ['back'],
 };
 
-const commonChronicConditions = [
-  'Type 2 Diabetes',
-  'Hypertension',
-  'Asthma',
-  'Coronary Artery Disease',
-  'Chronic Kidney Disease',
-  'Rheumatoid Arthritis',
-  "Crohn's Disease",
-  'Ulcerative Colitis',
-  'Hypothyroidism',
-  'Migraine',
-  'Osteoarthritis',
-  'Depression',
-  'Anxiety Disorder',
-  'Fibromyalgia',
-  'Gastroesophageal Reflux Disease (GERD)',
-  'Irritable Bowel Syndrome (IBS)',
-  'Chronic Obstructive Pulmonary Disease (COPD)',
-  'Psoriasis',
-  'Epilepsy',
-  'Multiple Sclerosis',
-  "Parkinson's Disease",
-  "Alzheimer's Disease",
-  'Obesity',
-  'Sleep Apnea',
-  'Polycystic Ovary Syndrome (PCOS)',
-  'Endometriosis',
-  'Celiac Disease',
-  'Lupus',
-  "Sjögren's Syndrome",
-  'Anemia',
-].sort();
-
-const commonMedications = [
-  'Lisinopril',
-  'Metformin',
-  'Atorvastatin',
-  'Levothyroxine',
-  'Amlodipine',
-  'Omeprazole',
-  'Albuterol',
-  'Hydrochlorothiazide',
-  'Gabapentin',
-  'Sertraline',
-  'Losartan',
-  'Ventolin',
-  'Propranolol',
-  'Metoprolol',
-  'Warfarin',
-  'Aspirin',
-  'Ibuprofen',
-  'Acetaminophen',
-  'Amoxicillin',
-  'Azithromycin',
-  'Prednisone',
-  'Insulin Glargine',
-  'Insulin Lispro',
-  'Duloxetine',
-  'Escitalopram',
-  'Furosemide',
-  'Simvastatin',
-  'Tramadol',
-  'Vitamin D',
-  'Folic Acid',
-  'Calcium Carbonate',
-].sort();
-
-const commonAllergies = [
-  'Penicillin',
-  'Amoxicillin',
-  'Sulfa Drugs',
-  'Codeine',
-  'Morphine',
-  'Aspirin',
-  'Ibuprofen',
-  'Latex',
-  'Peanuts',
-  'Tree Nuts',
-  'Shellfish',
-  'Dairy',
-  'Eggs',
-  'Soy',
-  'Wheat',
-  'Gluten',
-  'Dust Mites',
-  'Pollen',
-  'Animal Dander',
-  'Insect Stings (Bee, Wasp)',
-  'Nickel',
-  'Fragrances',
-  'Dyes',
-  'Local Anesthetics (e.g., Lidocaine)',
-  'Contrast Dye',
-  'Iodine',
-  'Flu Shot',
-].sort();
-
-const nonAnatomyLocationOptions: { value: string; label: string }[] = [];
-
 interface DiagnosisFormProps {
   form: UseFormReturn<FormValues>;
   onSubmit: (values: FormValues) => void;
@@ -389,15 +190,15 @@ interface DiagnosisFormProps {
   currentStep: number;
   setCurrentStep: (step: number | ((prevStep: number) => number)) => void;
   totalSteps: number;
+  patientProfile: PatientProfile;
 }
 
-const stepTitles = ['Patient Profile', 'Symptom Location(s)', 'Symptom Type(s)', 'Symptom Details'];
+const stepTitles = ['Symptom Location(s)', 'Symptom Type(s)', 'Symptom Details'];
 
 const stepIcons: Record<number, React.ElementType> = {
-  0: IdCard,
-  1: MapPin,
-  2: ListChecks,
-  3: ClipboardList,
+  0: MapPin,
+  1: ListChecks,
+  2: ClipboardList,
 };
 
 export const DiagnosisForm = React.memo(function DiagnosisForm({
@@ -407,37 +208,27 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
   currentStep,
   setCurrentStep,
   totalSteps,
+  patientProfile,
 }: DiagnosisFormProps) {
+  const [user] = useAuthState(auth);
+  const [isPremium, setIsPremium] = React.useState(false);
   const [symptomTypePopoverOpen, setSymptomTypePopoverOpen] = React.useState(false);
 
-  const selectedSex = form.watch('profile.sex');
-  const selectedLocations = form.watch('symptoms.location') || [];
-  const currentAge = form.watch('profile.age');
-
-  const { iconPath: AgeIconToRender, label: ageLabel } = getAgeIconAndLabel(currentAge);
-
-  const formErrors: FieldErrors<FormValues> = form.formState.errors;
-
   React.useEffect(() => {
-    const currentLocs = form.getValues('symptoms.location');
-    if (!Array.isArray(currentLocs) || !selectedSex || selectedSex === 'other') return;
-
-    const currentAnatomyParts = selectedSex === 'male' ? maleBodyRegions : femaleBodyRegions;
-
-    let changed = false;
-    const newLocations = currentLocs.filter((locId) => {
-      const partDefinition = currentAnatomyParts.find((p: BodyPart) => p.id === locId);
-      if (partDefinition?.sex && partDefinition.sex !== selectedSex) {
-        changed = true;
-        return false;
+    async function checkSubscription() {
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setIsPremium(userDoc.data().isPremium || false);
+        }
       }
-      return true;
-    });
-
-    if (changed || newLocations.length !== currentLocs.length) {
-      form.setValue('symptoms.location', newLocations, { shouldValidate: true });
     }
-  }, [selectedSex, form]);
+    checkSubscription();
+  }, [user]);
+
+  const selectedSex = patientProfile.sex;
+  const selectedLocations = form.watch('symptoms.location') || [];
+  const imageUrl = form.watch('symptoms.symptomImageUrl');
 
   const filteredSymptomTypesForDropdown = React.useMemo(() => {
     if (!selectedLocations || selectedLocations.length === 0) {
@@ -447,7 +238,6 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
     sortedSimplifiedSymptomTypes.forEach((st) => {
       const allowedRegions = symptomTypeToLocationMapping[st.value] || [];
       if (allowedRegions.length === 0) {
-        // Show if not region-specific
         displayableSymptomTypeValues.add(st.value);
         return;
       }
@@ -459,84 +249,38 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
     return sortedSimplifiedSymptomTypes.filter((st) => displayableSymptomTypeValues.has(st.value));
   }, [selectedLocations]);
 
-  React.useEffect(() => {
-    const currentSelectedTypes = form.getValues('symptoms.type') || [];
-    if (
-      filteredSymptomTypesForDropdown.length === 0 &&
-      selectedLocations.length > 0 &&
-      currentSelectedTypes.length > 0 &&
-      !selectedLocations.some((sl) => nonAnatomyLocationOptions.map((o) => o.value).includes(sl))
-    ) {
-      form.setValue('symptoms.type', [], { shouldValidate: true });
-    } else if (currentSelectedTypes.length > 0) {
-      const validFilteredValues = new Set(filteredSymptomTypesForDropdown.map((st) => st.value));
-      const newSelectedTypes = currentSelectedTypes.filter((typeValue) => validFilteredValues.has(typeValue));
-
-      if (newSelectedTypes.length !== currentSelectedTypes.length) {
-        form.setValue('symptoms.type', newSelectedTypes, { shouldValidate: true });
-      }
-    }
-  }, [filteredSymptomTypesForDropdown, form, selectedLocations]);
-
-  const sexOptions = [
-    {
-      value: 'male',
-      label: 'Male',
-      Icon: () => null, // will be handled in render
-    },
-    {
-      value: 'female',
-      label: 'Female',
-      Icon: () => null, // will be handled in render
-    },
-    {
-      value: 'other',
-      label: 'Other / Prefer not to say',
-      Icon: OtherSexIcon, // fallback to SVG for 'other'
-    },
-  ];
-
-  const fieldsForStep: FieldPath<FormValues>[][] = [
-    ['profile.age', 'profile.sex'],
-    ['symptoms.location'],
-    ['symptoms.type'],
-    ['symptoms.severity', 'symptoms.duration', 'symptoms.onset'],
-  ];
-
   const handleNext = async () => {
-    const fieldsToValidate = fieldsForStep[currentStep];
-    const isValid = await form.trigger(fieldsToValidate);
+    const fieldsForStep: FieldPath<FormValues>[][] = [
+      ['symptoms.location'],
+      ['symptoms.type'],
+      [
+        'symptoms.severity',
+        'symptoms.duration',
+        'symptoms.onset',
+        'symptoms.triggers',
+        'symptoms.extras',
+        'symptoms.symptomImageUrl',
+      ],
+    ];
+    const isValid = await form.trigger(fieldsForStep[currentStep]);
     if (isValid) {
       setCurrentStep((prev) => prev + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
-    } else {
-      const firstErrorField = fieldsToValidate.find((field) => {
-        const fieldState = form.getFieldState(field);
-        return fieldState.error?.message;
-      });
-
-      if (firstErrorField) {
-        const element = document.getElementsByName(firstErrorField)[0];
-        element?.focus({ preventScroll: true });
-        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handlePrev = () => {
-    setCurrentStep((prev) => prev - 1);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
-
-  sexOptions.find((opt) => opt.value === 'male')!.Icon = () => <SexIcon3D modelPath="/models/male_anatomy.glb" />;
-  sexOptions.find((opt) => opt.value === 'female')!.Icon = () => <SexIcon3D modelPath="/models/female_anatomy.glb" />;
 
   return (
     <FormProviderComponent {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-8 md:space-y-12 animate-fade-in max-w-2xl mx-auto px-2 md:px-0"
-        aria-label="Patient diagnosis form"
       >
         <div className="mb-6 rounded-md border bg-muted/30 p-3 text-center">
           <p className="text-sm font-medium text-muted-foreground">
@@ -544,8 +288,6 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
             <span className="font-semibold text-primary">{stepTitles[currentStep]}</span>
           </p>
           <Progress value={((currentStep + 1) / totalSteps) * 100} className="mt-2 h-2 w-full" />
-
-          {/* Enhanced Step Indicator */}
           <div className="mt-4 flex justify-between gap-2 text-xs font-medium text-muted-foreground">
             {stepTitles.map((title, index) => (
               <div
@@ -570,439 +312,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
           <Card>
             <CardHeader>
               <CardTitle className="font-headline flex items-center gap-2">
-                {React.createElement(stepIcons[0] || IdCard, { className: 'h-6 w-6 text-primary/80' })}
-                {stepTitles[0]}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="profile.age"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Age <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <div className="flex items-center gap-4 pt-2">
-                      <div className="flex w-1/4 flex-shrink-0 items-center justify-center">
-                        <Image
-                          src={AgeIconToRender}
-                          alt="Age Icon"
-                          width={80}
-                          height={80}
-                          className="object-contain transition-opacity duration-300"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <FormControl>
-                          <Slider
-                            value={[Number(field.value) || 0]}
-                            min={0}
-                            max={80}
-                            step={1}
-                            onValueChange={(value) => field.onChange(value[0])}
-                            className="w-full"
-                            aria-label="Age slider"
-                            valueLabel={ageLabel.replace('Selected Age: ', '')}
-                          />
-                        </FormControl>
-                        <div className="text-center text-sm text-muted-foreground tabular-nums">{ageLabel}</div>
-                      </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="profile.sex"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Sex <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-3">
-                        {sexOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            role="radio"
-                            aria-checked={field.value === option.value}
-                            onClick={() => field.onChange(option.value as 'male' | 'female' | 'other')}
-                            className={cn(
-                              'group flex-1 p-6 border rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-150 ease-in-out',
-                              'hover:shadow-lg hover:border-primary/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                              field.value === option.value
-                                ? 'border-primary ring-2 ring-primary ring-offset-2 bg-primary/10 shadow-xl'
-                                : 'border-input bg-card hover:bg-muted/50'
-                            )}
-                            aria-label={option.label}
-                            style={{ minHeight: '220px' }}
-                          >
-                            {option.value === 'male' || option.value === 'female' ? (
-                              <SexIcon3D
-                                modelPath={
-                                  option.value === 'male' ? '/models/male_walking.glb' : '/models/female_walking.glb'
-                                }
-                                scale={option.value === 'male' ? 1.4 : 1.3}
-                                className="w-36 h-36"
-                                animate={field.value === option.value}
-                                position={option.value === 'female' ? [0, -0.4, 0] : [0, -0.4, 0]}
-                              />
-                            ) : (
-                              <option.Icon />
-                            )}
-                            <span
-                              className={cn(
-                                'text-base text-center font-medium',
-                                field.value === option.value ? 'text-primary' : 'text-foreground/80'
-                              )}
-                            >
-                              {option.label}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="profile.chronic_conditions"
-                render={({ field }) => {
-                  const hasError = formErrors.profile?.chronic_conditions && formErrors.profile?.chronic_conditions;
-                  const isValid = !hasError && formErrors.profile?.chronic_conditions;
-                  const [popoverOpen, setPopoverOpen] = React.useState(false);
-                  const [inputValue, setInputValue] = React.useState(
-                    Array.isArray(field.value)
-                      ? field.value.join('\n')
-                      : typeof field.value === 'string'
-                        ? field.value
-                        : ''
-                  );
-
-                  const filteredSuggestions = commonChronicConditions.filter(
-                    (condition) =>
-                      condition.toLowerCase().includes(inputValue.split('\n').pop()?.toLowerCase() || '') &&
-                      !(Array.isArray(field.value) ? field.value : []).some(
-                        (existing) => existing.toLowerCase() === condition.toLowerCase()
-                      )
-                  );
-
-                  React.useEffect(() => {
-                    const currentFieldValue = Array.isArray(field.value)
-                      ? field.value.join('\n')
-                      : typeof field.value === 'string'
-                        ? field.value
-                        : '';
-                    if (currentFieldValue !== inputValue) {
-                      setInputValue(currentFieldValue);
-                    }
-                  }, [field.value]);
-
-                  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                    setInputValue(e.target.value);
-                    const value = e.target.value;
-                    field.onChange(value); // Pass the string value directly
-                    setPopoverOpen(true); // Open popover on input change
-                  };
-
-                  const handleSelectSuggestion = (suggestion: string) => {
-                    const lines = inputValue.split('\n');
-                    lines[lines.length - 1] = suggestion; // Replace last line with suggestion
-                    const newValue = lines.join('\n');
-                    setInputValue(newValue);
-                    field.onChange(newValue); // Pass the new string value directly
-                    setPopoverOpen(false);
-                  };
-
-                  return (
-                    <FormItem>
-                      <FormLabel>Chronic Conditions (Optional)</FormLabel>
-                      <FormControl>
-                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                          <PopoverTrigger asChild>
-                            <div className="relative">
-                              <Textarea
-                                placeholder="e.g., Type 2 Diabetes,&#x0a;Hypertension (one per line)"
-                                value={inputValue}
-                                onChange={handleInputChange}
-                                className={cn(
-                                  hasError && 'border-destructive focus-visible:ring-destructive',
-                                  isValid && 'border-primary focus-visible:ring-primary'
-                                )}
-                              />
-                              {hasError && <XIcon className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
-                            </div>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
-                              <CommandInput
-                                placeholder="Search conditions..."
-                                className="h-9"
-                                value={inputValue.split('\n').pop() || ''}
-                                onValueChange={(value) => {
-                                  const lines = inputValue.split('\n');
-                                  lines[lines.length - 1] = value;
-                                  const newValue = lines.join('\n');
-                                  setInputValue(newValue);
-                                  field.onChange(newValue); // Pass the new string value directly
-                                }}
-                              />
-                              <ScrollArea className="h-[200px]">
-                                <CommandList>
-                                  <CommandEmpty>No condition found.</CommandEmpty>
-                                  <CommandGroup>
-                                    {filteredSuggestions.map((condition) => (
-                                      <CommandItem
-                                        key={condition}
-                                        value={condition}
-                                        onSelect={() => handleSelectSuggestion(condition)}
-                                      >
-                                        {condition}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </ScrollArea>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <FormField
-                control={form.control}
-                name="profile.medications"
-                render={({ field }) => {
-                  const hasError = formErrors.profile?.medications && formErrors.profile?.medications;
-                  const isValid = !hasError && formErrors.profile?.medications;
-                  const [popoverOpen, setPopoverOpen] = React.useState(false);
-                  const [inputValue, setInputValue] = React.useState(
-                    Array.isArray(field.value)
-                      ? field.value.join('\n')
-                      : typeof field.value === 'string'
-                        ? field.value
-                        : ''
-                  );
-
-                  const filteredSuggestions = commonMedications.filter(
-                    (medication) =>
-                      medication.toLowerCase().includes(inputValue.split('\n').pop()?.toLowerCase() || '') &&
-                      !(Array.isArray(field.value) ? field.value : []).some(
-                        (existing) => existing.toLowerCase() === medication.toLowerCase()
-                      )
-                  );
-
-                  React.useEffect(() => {
-                    const currentFieldValue = Array.isArray(field.value)
-                      ? field.value.join('\n')
-                      : typeof field.value === 'string'
-                        ? field.value
-                        : '';
-                    if (currentFieldValue !== inputValue) {
-                      setInputValue(currentFieldValue);
-                    }
-                  }, [field.value]);
-
-                  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                    setInputValue(e.target.value);
-                    const value = e.target.value;
-                    field.onChange(value); // Pass the string value directly
-                    setPopoverOpen(true); // Open popover on input change
-                  };
-
-                  const handleSelectSuggestion = (suggestion: string) => {
-                    const lines = inputValue.split('\n');
-                    lines[lines.length - 1] = suggestion; // Replace last line with suggestion
-                    const newValue = lines.join('\n');
-                    setInputValue(newValue);
-                    field.onChange(newValue); // Pass the new string value directly
-                    setPopoverOpen(false);
-                  };
-
-                  return (
-                    <FormItem>
-                      <FormLabel>Medications (Optional)</FormLabel>
-                      <FormControl>
-                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                          <PopoverTrigger asChild>
-                            <div className="relative">
-                              <Textarea
-                                placeholder="e.g., Metformin, Lisinopril, Ibuprofen (one per line)"
-                                value={inputValue}
-                                onChange={handleInputChange}
-                                className={cn(
-                                  hasError && 'border-destructive focus-visible:ring-destructive',
-                                  isValid && 'border-primary focus-visible:ring-primary'
-                                )}
-                              />
-                              {hasError && <XIcon className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
-                            </div>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
-                              <CommandInput
-                                placeholder="Search medications..."
-                                className="h-9"
-                                value={inputValue.split('\n').pop() || ''}
-                                onValueChange={(value) => {
-                                  const lines = inputValue.split('\n');
-                                  lines[lines.length - 1] = value;
-                                  const newValue = lines.join('\n');
-                                  setInputValue(newValue);
-                                  field.onChange(newValue); // Pass the new string value directly
-                                }}
-                              />
-                              <ScrollArea className="h-[200px]">
-                                <CommandList>
-                                  <CommandEmpty>No medication found.</CommandEmpty>
-                                  <CommandGroup>
-                                    {filteredSuggestions.map((medication) => (
-                                      <CommandItem
-                                        key={medication}
-                                        value={medication}
-                                        onSelect={() => handleSelectSuggestion(medication)}
-                                      >
-                                        {medication}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </ScrollArea>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <FormField
-                control={form.control}
-                name="profile.allergies"
-                render={({ field }) => {
-                  const hasError = formErrors.profile?.allergies && formErrors.profile?.allergies;
-                  const isValid = !hasError && formErrors.profile?.allergies;
-                  const [popoverOpen, setPopoverOpen] = React.useState(false);
-                  const [inputValue, setInputValue] = React.useState(
-                    Array.isArray(field.value)
-                      ? field.value.join('\n')
-                      : typeof field.value === 'string'
-                        ? field.value
-                        : ''
-                  );
-
-                  const filteredSuggestions = commonAllergies.filter(
-                    (allergy) =>
-                      allergy.toLowerCase().includes(inputValue.split('\n').pop()?.toLowerCase() || '') &&
-                      !(Array.isArray(field.value) ? field.value : []).some(
-                        (existing) => existing.toLowerCase() === allergy.toLowerCase()
-                      )
-                  );
-
-                  React.useEffect(() => {
-                    const currentFieldValue = Array.isArray(field.value)
-                      ? field.value.join('\n')
-                      : typeof field.value === 'string'
-                        ? field.value
-                        : '';
-                    if (currentFieldValue !== inputValue) {
-                      setInputValue(currentFieldValue);
-                    }
-                  }, [field.value]);
-
-                  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                    setInputValue(e.target.value);
-                    const value = e.target.value;
-                    field.onChange(value); // Pass the string value directly
-                    setPopoverOpen(true); // Open popover on input change
-                  };
-
-                  const handleSelectSuggestion = (suggestion: string) => {
-                    const lines = inputValue.split('\n');
-                    lines[lines.length - 1] = suggestion; // Replace last line with suggestion
-                    const newValue = lines.join('\n');
-                    setInputValue(newValue);
-                    field.onChange(newValue); // Pass the new string value directly
-                    setPopoverOpen(false);
-                  };
-
-                  return (
-                    <FormItem>
-                      <FormLabel>Allergies (Optional)</FormLabel>
-                      <FormControl>
-                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                          <PopoverTrigger asChild>
-                            <div className="relative">
-                              <Textarea
-                                placeholder="e.g., Penicillin, Peanuts, Bee stings (one per line)"
-                                value={inputValue}
-                                onChange={handleInputChange}
-                                className={cn(
-                                  hasError && 'border-destructive focus-visible:ring-destructive',
-                                  isValid && 'border-primary focus-visible:ring-primary'
-                                )}
-                              />
-                              {hasError && <XIcon className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
-                            </div>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
-                              <CommandInput
-                                placeholder="Search allergies..."
-                                className="h-9"
-                                value={inputValue.split('\n').pop() || ''}
-                                onValueChange={(value) => {
-                                  const lines = inputValue.split('\n');
-                                  lines[lines.length - 1] = value;
-                                  const newValue = lines.join('\n');
-                                  setInputValue(newValue);
-                                  field.onChange(newValue); // Pass the new string value directly
-                                }}
-                              />
-                              <ScrollArea className="h-[200px]">
-                                <CommandList>
-                                  <CommandEmpty>No allergy found.</CommandEmpty>
-                                  <CommandGroup>
-                                    {filteredSuggestions.map((allergy) => (
-                                      <CommandItem
-                                        key={allergy}
-                                        value={allergy}
-                                        onSelect={() => handleSelectSuggestion(allergy)}
-                                      >
-                                        {allergy}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </ScrollArea>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        {currentStep === 1 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-headline flex items-center gap-2">
-                {React.createElement(stepIcons[1] || MapPin, { className: 'h-6 w-6 text-primary/80' })}
-                {stepTitles[1]}
+                <MapPin className="h-6 w-6 text-primary/80" /> {stepTitles[0]}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -1015,20 +325,16 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                       Location(s) <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
-                      <div className={cn(!selectedSex && 'opacity-50')}>
+                      <div>
                         <HumanAnatomy3D
                           selectedLocations={field.value || []}
-                          onLocationToggle={(locationValue) => {
-                            const currentValues = field.value || [];
-                            const newValues = currentValues.includes(locationValue)
-                              ? currentValues.filter((v) => v !== locationValue)
-                              : [...currentValues, locationValue];
-                            field.onChange(newValues);
+                          onLocationToggle={(loc) => {
+                            const cur = field.value || [];
+                            field.onChange(cur.includes(loc) ? cur.filter((v) => v !== loc) : [...cur, loc]);
                           }}
-                          selectedSex={selectedSex}
-                          disabled={!selectedSex}
+                          selectedSex={selectedSex as any}
+                          disabled={selectedSex === 'other'}
                         />
-                        {/* Checkbox for Skin (General) */}
                         <FormField
                           control={form.control}
                           name="symptoms.location"
@@ -1038,29 +344,20 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                                 <Checkbox
                                   checked={(field.value || []).includes('skin-general')}
                                   onCheckedChange={(checked) => {
-                                    const currentValues = field.value || [];
-                                    const newValues = checked
-                                      ? [...currentValues, 'skin-general']
-                                      : currentValues.filter((v) => v !== 'skin-general');
-                                    field.onChange(newValues);
+                                    const cur = field.value || [];
+                                    field.onChange(
+                                      checked ? [...cur, 'skin-general'] : cur.filter((v) => v !== 'skin-general')
+                                    );
                                   }}
-                                  aria-label="Select Skin (General) as a location"
                                 />
                               </FormControl>
                               <div className="space-y-1 leading-none">
                                 <FormLabel>Skin (General)</FormLabel>
-                                <FormDescription>
-                                  Select for symptoms affecting the skin broadly, not a specific anatomical region.
-                                </FormDescription>
+                                <FormDescription>Symptoms affecting the skin broadly.</FormDescription>
                               </div>
                             </FormItem>
                           )}
                         />
-                        {!selectedSex && (
-                          <p className="mt-2 text-sm text-center text-muted-foreground">
-                            Please select a sex in the "Patient Profile" step to enable body part selection.
-                          </p>
-                        )}
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -1071,12 +368,11 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
           </Card>
         )}
 
-        {currentStep === 2 && (
+        {currentStep === 1 && (
           <Card>
             <CardHeader>
               <CardTitle className="font-headline flex items-center gap-2">
-                {React.createElement(stepIcons[2] || ListChecks, { className: 'h-6 w-6 text-primary/80' })}
-                {stepTitles[2]}
+                <ListChecks className="h-6 w-6 text-primary/80" /> {stepTitles[1]}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -1092,43 +388,27 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                       <PopoverTrigger asChild disabled={selectedLocations.length === 0}>
                         <FormControl>
                           <div
-                            role="combobox"
-                            aria-expanded={symptomTypePopoverOpen}
-                            aria-controls="symptom-type-list"
-                            tabIndex={selectedLocations.length === 0 ? -1 : 0}
                             className={cn(
-                              'flex flex-wrap w-full items-center gap-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[2.5rem] cursor-pointer',
+                              'flex flex-wrap w-full items-center gap-1 rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[2.5rem] cursor-pointer',
                               selectedLocations.length === 0 && 'cursor-not-allowed opacity-50'
                             )}
                           >
-                            {field.value && field.value.length > 0 ? (
-                              field.value.map((value) => {
-                                const symptom = sortedSimplifiedSymptomTypes.find((s) => s.value === value);
-                                return (
-                                  <Badge
-                                    variant="secondary"
-                                    key={value}
-                                    className="flex items-center gap-1"
-                                    onClick={(e) => e.stopPropagation()} // Prevent popover from closing when clicking badge itself
-                                  >
-                                    {symptom ? symptom.label : value}
-                                    <button
-                                      type="button"
-                                      aria-label={`Remove ${symptom ? symptom.label : value}`}
-                                      className="rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                                      onClick={(e) => {
-                                        e.stopPropagation(); // Prevent popover from toggling
-                                        field.onChange(field.value?.filter((v) => v !== value));
-                                      }}
-                                    >
-                                      <XIcon className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                                    </button>
-                                  </Badge>
-                                );
-                              })
+                            {field.value?.length ? (
+                              field.value.map((val) => (
+                                <Badge variant="secondary" key={val} className="flex items-center gap-1">
+                                  {sortedSimplifiedSymptomTypes.find((s) => s.value === val)?.label || val}
+                                  <XIcon
+                                    className="h-3 w-3 cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      field.onChange(field.value.filter((v) => v !== val));
+                                    }}
+                                  />
+                                </Badge>
+                              ))
                             ) : (
                               <span className="text-muted-foreground">
-                                {selectedLocations.length > 0 ? 'Select symptom types...' : 'Select location(s) first'}
+                                {selectedLocations.length ? 'Select symptom types...' : 'Select location(s) first'}
                               </span>
                             )}
                           </div>
@@ -1138,46 +418,35 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                         <Command>
                           <CommandInput placeholder="Search symptom types..." />
                           <ScrollArea className="h-[200px]">
-                            <CommandList id="symptom-type-list">
-                              <CommandEmpty>
-                                {selectedLocations.length === 0
-                                  ? 'Please select a location first.'
-                                  : 'No symptom type found for selected location(s).'}
-                              </CommandEmpty>
+                            <CommandList>
+                              <CommandEmpty>No results found.</CommandEmpty>
                               <CommandGroup>
-                                {filteredSymptomTypesForDropdown.map((symptom) => {
-                                  const isSelected = field.value?.includes(symptom.value);
-                                  return (
-                                    <CommandItem
-                                      key={symptom.value}
-                                      value={symptom.label}
-                                      onSelect={() => {
-                                        const currentValues = field.value || [];
-                                        if (isSelected) {
-                                          field.onChange(currentValues.filter((v) => v !== symptom.value));
-                                        } else {
-                                          field.onChange([...currentValues, symptom.value]);
-                                        }
-                                        // Keep popover open for multiple selections
-                                        // setSymptomTypePopoverOpen(true);
-                                      }}
-                                    >
-                                      <Check className={cn('mr-2 h-4 w-4', isSelected ? 'opacity-100' : 'opacity-0')} />
-                                      {symptom.label}
-                                    </CommandItem>
-                                  );
-                                })}
+                                {filteredSymptomTypesForDropdown.map((s) => (
+                                  <CommandItem
+                                    key={s.value}
+                                    value={s.label}
+                                    onSelect={() => {
+                                      const cur = field.value || [];
+                                      field.onChange(
+                                        cur.includes(s.value) ? cur.filter((v) => v !== s.value) : [...cur, s.value]
+                                      );
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        'mr-2 h-4 w-4',
+                                        field.value?.includes(s.value) ? 'opacity-100' : 'opacity-0'
+                                      )}
+                                    />
+                                    {s.label}
+                                  </CommandItem>
+                                ))}
                               </CommandGroup>
                             </CommandList>
                           </ScrollArea>
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    {selectedLocations.length === 0 && (
-                      <FormDescription className="mt-2">
-                        Please select symptom location(s) first to enable symptom type selection.
-                      </FormDescription>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1186,15 +455,57 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
           </Card>
         )}
 
-        {currentStep === 3 && (
+        {currentStep === 2 && (
           <Card>
             <CardHeader>
               <CardTitle className="font-headline flex items-center gap-2">
-                {React.createElement(stepIcons[3] || ClipboardList, { className: 'h-6 w-6 text-primary/80' })}
-                {stepTitles[3]}
+                <ClipboardList className="h-6 w-6 text-primary/80" /> {stepTitles[2]}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="symptoms.symptomImageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      Upload Photo of Symptom (Optional)
+                      <Crown className={cn('h-3 w-3', isPremium ? 'text-yellow-500' : 'text-muted-foreground')} />
+                    </FormLabel>
+                    <FormControl>
+                      <div className="space-y-4">
+                        <div className="flex gap-4 items-center">
+                          <div className="h-32 w-full border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-muted/30 overflow-hidden">
+                            {imageUrl ? (
+                              <img src={imageUrl} alt="Symptom" className="h-full w-full object-contain" />
+                            ) : (
+                              <div className="text-center p-4">
+                                <Camera className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                                <p className="text-xs text-muted-foreground font-medium">
+                                  Premium users can add a photo for better AI analysis.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <Input
+                          placeholder="Paste image URL here (e.g., from a cloud drive)"
+                          {...field}
+                          disabled={!isPremium}
+                          className="w-full"
+                        />
+                      </div>
+                    </FormControl>
+                    {!isPremium && (
+                      <FormDescription>
+                        PRO members can include photos of rashes, swelling, etc., for more accurate AI detection.
+                      </FormDescription>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="symptoms.severity"
@@ -1210,14 +521,12 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                           min={1}
                           max={10}
                           step={1}
-                          onValueChange={(value) => field.onChange(value[0])}
+                          onValueChange={(v) => field.onChange(v[0])}
                           className="w-[85%]"
-                          aria-label="Severity slider"
                         />
-                        <span className="w-[10%] text-right text-sm tabular-nums">{Number(field.value) || 5}</span>
+                        <span className="w-[10%] text-right text-sm">{field.value}</span>
                       </div>
                     </FormControl>
-                    <FormDescription>1-3: Mild, 4-7: Moderate, 8-10: Severe</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1226,85 +535,31 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                 control={form.control}
                 name="symptoms.duration"
                 render={({ field }) => {
-                  const hasError = formErrors.symptoms?.duration && formErrors.symptoms?.duration;
-                  const isValid = !hasError && formErrors.symptoms?.duration;
-                  const [durationValue, setDurationValue] = React.useState<{ number: string; unit: string }>({
-                    number: '',
-                    unit: 'days',
-                  });
-
-                  React.useEffect(() => {
-                    if (field.value) {
-                      const parts = field.value.match(/^(\d+)\s*(day|week|month|year)s?$/i);
-                      if (parts) {
-                        setDurationValue({
-                          number: parts[1],
-                          unit: parts[2].toLowerCase() + (parts[2].toLowerCase().endsWith('s') ? '' : 's'),
-                        });
-                      } else {
-                        // If the existing value doesn't match the new format, reset to empty number and default unit
-                        setDurationValue({ number: '', unit: 'days' });
-                      }
-                    }
-                  }, [field.value]);
-
-                  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                    const newNumber = e.target.value;
-                    setDurationValue((prev) => ({ ...prev, number: newNumber }));
-                    if (newNumber && durationValue.unit) {
-                      field.onChange(`${newNumber} ${durationValue.unit}`);
-                    } else {
-                      field.onChange('');
-                    }
-                  };
-
-                  const handleUnitChange = (newUnit: string) => {
-                    setDurationValue((prev) => ({ ...prev, unit: newUnit }));
-                    if (durationValue.number && newUnit) {
-                      field.onChange(`${durationValue.number} ${newUnit}`);
-                    } else {
-                      field.onChange('');
-                    }
-                  };
-
+                  const [num, unit] = (field.value || '2 days').split(' ');
                   return (
                     <FormItem>
                       <FormLabel>
                         Duration <span className="text-destructive">*</span>
                       </FormLabel>
-                      <FormControl>
-                        <div className="relative flex gap-2">
-                          <Input
-                            type="number"
-                            placeholder="e.g., 2"
-                            {...field}
-                            value={durationValue.number === '' ? '' : durationValue.number}
-                            onChange={handleNumberChange}
-                            className={cn(
-                              'flex-grow',
-                              hasError && 'border-destructive focus-visible:ring-destructive',
-                              isValid && 'border-primary focus-visible:ring-primary'
-                            )}
-                          />
-                          <Select onValueChange={handleUnitChange} value={durationValue.unit}>
-                            <SelectTrigger
-                              className={cn(
-                                'w-[120px]',
-                                hasError && 'border-destructive focus-visible:ring-destructive',
-                                isValid && 'border-primary focus-visible:ring-primary'
-                              )}
-                            >
-                              <SelectValue placeholder="Unit" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="days">Day(s)</SelectItem>
-                              <SelectItem value="weeks">Week(s)</SelectItem>
-                              <SelectItem value="months">Month(s)</SelectItem>
-                              <SelectItem value="years">Year(s)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </FormControl>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          value={num}
+                          onChange={(e) => field.onChange(`${e.target.value} ${unit || 'days'}`)}
+                          className="flex-grow"
+                        />
+                        <Select value={unit || 'days'} onValueChange={(v) => field.onChange(`${num || '0'} ${v}`)}>
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="days">Day(s)</SelectItem>
+                            <SelectItem value="weeks">Week(s)</SelectItem>
+                            <SelectItem value="months">Month(s)</SelectItem>
+                            <SelectItem value="years">Year(s)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   );
@@ -1318,18 +573,13 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                     <FormLabel>
                       Onset <span className="text-destructive">*</span>
                     </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger
-                          aria-haspopup="listbox"
-                          aria-expanded={!!field.value}
-                          aria-controls="onset-listbox"
-                          aria-required={true}
-                        >
+                        <SelectTrigger>
                           <SelectValue placeholder="Select onset" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent id="onset-listbox">
+                      <SelectContent>
                         <SelectItem value="sudden">Sudden</SelectItem>
                         <SelectItem value="gradual">Gradual</SelectItem>
                       </SelectContent>
@@ -1341,137 +591,77 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
               <FormField
                 control={form.control}
                 name="symptoms.radiation"
-                render={({ field }) => {
-                  const hasError = formErrors.symptoms?.radiation && formErrors.symptoms?.radiation;
-                  const isValid = !hasError && formErrors.symptoms?.radiation;
-                  return (
-                    <FormItem>
-                      <FormLabel>Radiation (if any)</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            placeholder="e.g., To the left arm, Down the leg"
-                            {...field}
-                            className={cn(
-                              hasError && 'border-destructive focus-visible:ring-destructive',
-                              isValid && 'border-primary focus-visible:ring-primary'
-                            )}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormDescription>
-                        Describes if the symptom (e.g., pain) spreads from its main location to other areas.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Radiation (if any)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., To the left arm" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               <FormField
                 control={form.control}
                 name="symptoms.triggers"
-                render={({ field }) => {
-                  const hasError = formErrors.symptoms?.triggers && formErrors.symptoms?.triggers;
-                  const isValid = !hasError && formErrors.symptoms?.triggers;
-                  return (
-                    <FormItem>
-                      <FormLabel>Triggers (Optional)</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Textarea
-                            placeholder="e.g., Certain foods, Stress, Physical exertion (one per line)"
-                            value={
-                              Array.isArray(field.value)
-                                ? field.value.join('\n')
-                                : typeof field.value === 'string'
-                                  ? field.value
-                                  : ''
-                            }
-                            onChange={(e) => field.onChange(e.target.value)}
-                            className={cn(
-                              hasError && 'border-destructive focus-visible:ring-destructive',
-                              isValid && 'border-primary focus-visible:ring-primary'
-                            )}
-                          />
-                          {hasError && <XIcon className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
-                          {isValid && <XIcon className="absolute right-3 top-3 h-4 w-4 text-primary" />}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Triggers (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="e.g., Certain foods, Stress"
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               <FormField
                 control={form.control}
                 name="symptoms.extras"
-                render={({ field }) => {
-                  const hasError = formErrors.symptoms?.extras && formErrors.symptoms?.extras;
-                  const isValid = !hasError && formErrors.symptoms?.extras;
-                  return (
-                    <FormItem>
-                      <FormLabel>Extra Information (Optional)</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Textarea
-                            placeholder="Describe the qualities of your symptoms (e.g., for 'Pain', mention if it's sharp, dull, throbbing; for 'Rash', describe its appearance). You can also list any other symptoms not covered."
-                            value={
-                              Array.isArray(field.value)
-                                ? field.value.join('\n')
-                                : typeof field.value === 'string'
-                                  ? field.value
-                                  : ''
-                            }
-                            onChange={(e) => field.onChange(e.target.value)}
-                            className={cn(
-                              hasError && 'border-destructive focus-visible:ring-destructive',
-                              isValid && 'border-primary focus-visible:ring-primary'
-                            )}
-                          />
-                          {hasError && <XIcon className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
-                          {isValid && <XIcon className="absolute right-3 top-3 h-4 w-4 text-primary" />}
-                        </div>
-                      </FormControl>
-                      <FormDescription>
-                        Use this field to provide more details about your selected symptoms or add anything else
-                        relevant.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Extra Information (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="e.g., Sharp pain, dull ache"
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </CardContent>
           </Card>
         )}
 
         <div className="mt-8 flex items-center justify-between">
-          <div>
+          <div className="w-[100px]">
             {currentStep > 0 && (
-              <Button type="button" variant="outline" onClick={handlePrev} className="min-w-[100px]">
+              <Button type="button" variant="outline" onClick={handlePrev}>
                 Previous
               </Button>
             )}
           </div>
-          <div>
-            {currentStep < totalSteps - 1 && (
-              <Button type="button" onClick={handleNext} className="min-w-[100px]">
-                Next
-              </Button>
-            )}
-            {currentStep === totalSteps - 1 && (
-              <Button type="submit" className="min-w-[150px]" disabled={isLoading || !form.formState.isValid}>
-                {isLoading ? (
-                  <span className="flex items-center">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Getting Diagnosis...</span>
-                  </span>
-                ) : (
-                  'Get Diagnosis'
-                )}
-              </Button>
-            )}
-          </div>
+          {currentStep < totalSteps - 1 ? (
+            <Button type="button" onClick={handleNext}>
+              Next
+            </Button>
+          ) : (
+            <Button type="submit" disabled={isLoading || !form.formState.isValid}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Getting Diagnosis...
+                </>
+              ) : (
+                'Get Diagnosis'
+              )}
+            </Button>
+          )}
         </div>
       </form>
     </FormProviderComponent>

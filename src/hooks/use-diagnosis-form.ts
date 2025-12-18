@@ -8,10 +8,10 @@ import {
   type GenerateDiagnosesInput,
   type GenerateDiagnosesOutput,
 } from '@/ai/flows/generate-diagnoses';
-import { FormSchema, type FormValues } from '@/lib/schema';
+import { FormSchema, type FormValues, type PatientProfile } from '@/lib/schema';
 import { useToast } from '@/hooks/use-toast';
 import { transformFormDataForAI } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export type ViewMode = 'form' | 'results';
 
@@ -25,26 +25,19 @@ export interface DiagnosisFormState {
   result: GenerateDiagnosesOutput | undefined;
   handleSubmit: (values: FormValues) => void;
   handleStartNewDiagnosis: () => void;
-  setCurrentStep: (step: number) => void;
+  setCurrentStep: (step: number | ((prevStep: number) => number)) => void;
 }
 
-const TOTAL_FORM_STEPS = 4;
+const TOTAL_FORM_STEPS = 3;
 
-export function useDiagnosisForm(): DiagnosisFormState {
+export function useDiagnosisForm(patientProfile: PatientProfile | null): DiagnosisFormState {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>('form');
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(FormSchema),
+    resolver: zodResolver(FormSchema.omit({ profile: true })),
     defaultValues: {
-      profile: {
-        age: 0,
-        sex: undefined,
-        chronic_conditions: '',
-        medications: '',
-        allergies: '',
-      },
       symptoms: {
         location: [],
         type: [],
@@ -52,12 +45,23 @@ export function useDiagnosisForm(): DiagnosisFormState {
         duration: '',
         onset: undefined,
         radiation: '',
-        triggers: '',
-        extras: '',
+        triggers: '', // Fixed: Changed from [] to ''
+        extras: '', // Fixed: Changed from [] to ''
+        symptomImageUrl: '',
       },
     },
     mode: 'onChange',
   });
+
+  // Populate the form with patient profile data when it becomes available
+  useEffect(() => {
+    if (patientProfile) {
+      form.reset({
+        ...form.getValues(),
+        profile: patientProfile,
+      });
+    }
+  }, [patientProfile, form]);
 
   const mutation: UseMutationResult<GenerateDiagnosesOutput, Error, GenerateDiagnosesInput> = useMutation<
     GenerateDiagnosesOutput,
@@ -98,7 +102,19 @@ export function useDiagnosisForm(): DiagnosisFormState {
   });
 
   const handleSubmit = (values: FormValues) => {
-    const inputForAI = transformFormDataForAI(values);
+    if (!patientProfile) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No patient profile selected.',
+      });
+      return;
+    }
+    const fullData: FormValues = {
+      ...values,
+      profile: patientProfile,
+    };
+    const inputForAI = transformFormDataForAI(fullData);
     mutation.mutate(inputForAI);
   };
 
