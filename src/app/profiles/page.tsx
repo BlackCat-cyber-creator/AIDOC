@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AppHeader } from '@/components/layout/AppHeader';
 import { AppFooter } from '@/components/layout/AppFooter';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PlusCircle, User, Trash2, Edit, Loader2, Crown, Stethoscope } from 'lucide-react';
+import { PlusCircle, User, Trash2, Edit, Crown, Stethoscope } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -35,6 +35,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { useLoading } from '@/components/LoadingProvider'; // Import useLoading
 
 type ProfileWithDocId = PatientProfile & { docId: string };
 
@@ -50,10 +51,10 @@ export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<ProfileWithDocId[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<ProfileWithDocId | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isProfilesLoading, setIsProfilesLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [diagnosisCount, setDiagnosisCount] = useState(0);
+  const { setIsLoading } = useLoading(); // Get setIsLoading from context
 
   useEffect(() => {
     if (!loading && !user) {
@@ -66,6 +67,7 @@ export default function ProfilesPage() {
   const fetchUserDataAndProfiles = async () => {
     if (!user) return;
     setIsProfilesLoading(true);
+    setIsLoading(true); // Set global loading to true when fetching profiles
     try {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       const today = new Date().toISOString().split('T')[0];
@@ -93,6 +95,7 @@ export default function ProfilesPage() {
       console.error('Error fetching data: ', error);
     } finally {
       setIsProfilesLoading(false);
+      setIsLoading(false); // Set global loading to false after fetching profiles
     }
   };
 
@@ -105,7 +108,7 @@ export default function ProfilesPage() {
       return;
     }
 
-    setIsLoading(true);
+    setIsLoading(true); // Set global loading to true when submitting form
     try {
       if (selectedProfile?.docId) {
         const profileDoc = doc(db, 'users', user.uid, 'userProfile', selectedProfile.docId);
@@ -120,22 +123,26 @@ export default function ProfilesPage() {
     } catch (error) {
       console.error('Error saving profile: ', error);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Set global loading to false after form submission
     }
   };
 
   const handleDeleteProfile = async (docId: string) => {
     if (!user) return;
+    setIsLoading(true); // Set global loading to true when deleting profile
     try {
       const profileDoc = doc(db, 'users', user.uid, 'userProfile', docId);
       await deleteDoc(profileDoc);
       await fetchUserDataAndProfiles();
     } catch (error) {
       console.error('Error deleting profile: ', error);
+    } finally {
+      setIsLoading(false); // Set global loading to false after deleting profile
     }
   };
 
   const handleStartDiagnosis = (profile: ProfileWithDocId) => {
+    setIsLoading(true); // Set global loading to true when starting diagnosis
     sessionStorage.setItem('selectedPatientProfile', JSON.stringify(profile));
     router.push('/diagnosis');
   };
@@ -300,7 +307,20 @@ export default function ProfilesPage() {
                 </Card>
               ))}
 
-              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+              <Dialog
+                open={isFormOpen}
+                onOpenChange={(open) => {
+                  setIsFormOpen(open);
+                  if (open) {
+                    // Only set loading if the dialog is actually opening and not due to a limit alert
+                    if (!isProfileFull) {
+                      setIsLoading(true);
+                    }
+                  } else {
+                    setIsLoading(false);
+                  }
+                }}
+              >
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
@@ -337,7 +357,7 @@ export default function ProfilesPage() {
                     <PatientProfileForm
                       onSubmit={handleFormSubmit}
                       initialData={selectedProfile || undefined}
-                      isLoading={isLoading}
+                      // isLoading={isLoading} // PatientProfileForm already handles its own loading state
                       isPremium={isPremium}
                       submitButtonText={selectedProfile ? t('update_profile') : t('save_profile')}
                     />

@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
+import { useLoading } from '@/components/LoadingProvider'; // Import useLoading
 
 declare global {
   interface Window {
@@ -26,6 +27,7 @@ export default function BillingPage() {
   const router = useRouter();
   const [isPremium, setIsPremium] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { setIsLoading } = useLoading(); // Get setIsLoading from context
 
   useEffect(() => {
     async function checkSubscription() {
@@ -35,16 +37,17 @@ export default function BillingPage() {
           setIsPremium(userDoc.data().isPremium || false);
         }
       }
+      setIsLoading(false); // Turn off global loader after checking subscription
     }
     checkSubscription();
-  }, [user]);
+  }, [user, setIsLoading]);
 
   const handleUpgrade = async () => {
     if (!user) return;
     setIsProcessing(true);
+    setIsLoading(true); // Turn on global loader when starting upgrade
 
     try {
-      // We still call our API, but Midtrans will process the IDR equivalent
       const response = await fetch('/api/pay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,23 +67,30 @@ export default function BillingPage() {
           onSuccess: async (result: any) => {
             await updateDoc(doc(db, 'users', user.uid), { isPremium: true });
             setIsPremium(true);
+            setIsLoading(false); // Turn off global loader on success
             router.push('/profiles');
           },
           onPending: (result: any) => {
             alert('Payment is pending. Please complete your payment.');
+            setIsLoading(false); // Turn off global loader on pending
           },
           onError: (result: any) => {
             alert('Payment failed. Please try again.');
+            setIsLoading(false); // Turn off global loader on error
           },
           onClose: () => {
             setIsProcessing(false);
+            setIsLoading(false); // Turn off global loader on close (if payment never completed)
           },
         });
+      } else {
+        setIsLoading(false); // Turn off global loader if no token is received
       }
     } catch (error) {
       console.error(error);
       alert('Something went wrong. Please try again.');
       setIsProcessing(false);
+      setIsLoading(false); // Turn off global loader on API call error
     }
   };
 

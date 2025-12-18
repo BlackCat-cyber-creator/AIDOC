@@ -19,12 +19,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation'; // Import usePathname
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
+import { useLoading } from '@/components/LoadingProvider'; // Import useLoading
 
 const languages = [
   { code: 'en', name: 'English' },
@@ -37,9 +38,11 @@ export function AppHeader() {
   const isMobile = useIsMobile();
   const [user] = useAuthState(auth);
   const router = useRouter();
+  const pathname = usePathname(); // Get current pathname
   const { i18n, t } = useTranslation();
   const [isPremium, setIsPremium] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { setIsLoading } = useLoading(); // Get setIsLoading from context
 
   useEffect(() => {
     setMounted(true);
@@ -58,12 +61,21 @@ export function AppHeader() {
   }, [user]);
 
   const handleLogout = async () => {
+    setIsLoading(true); // Set global loading to true
     await signOut(auth);
     router.push('/');
   };
 
   const changeLanguage = (code: string) => {
     i18n.changeLanguage(code);
+  };
+
+  const handleNavigation = (path: string) => {
+    if (pathname !== path) {
+      // Only set loading and navigate if changing pages
+      setIsLoading(true); // Set global loading to true before navigation
+      router.push(path);
+    }
   };
 
   const currentLanguageName = languages.find((l) => l.code === i18n.language)?.name || 'Language';
@@ -114,13 +126,12 @@ export function AppHeader() {
             <DropdownMenuSeparator />
 
             <DropdownMenuItem
-              onClick={() => router.push('/billing')}
-              className="cursor-pointer flex items-center justify-between"
+              onClick={() => handleNavigation('/billing')}
+              className="cursor-pointer"
+              disabled={pathname === '/billing'} // Disable if already on billing page
             >
-              <div className="flex items-center">
-                <CreditCard className="mr-2 h-4 w-4" />
-                <span>{t('subscription')}</span>
-              </div>
+              <CreditCard className="mr-2 h-4 w-4" />
+              <span>{t('subscription')}</span>
               <Badge
                 variant={isPremium ? 'default' : 'secondary'}
                 className={isPremium ? 'bg-yellow-500 hover:bg-yellow-600 h-5 text-[10px]' : 'h-5 text-[10px]'}
@@ -150,7 +161,11 @@ export function AppHeader() {
               </DropdownMenuPortal>
             </DropdownMenuSub>
 
-            <DropdownMenuItem onClick={() => router.push('/profiles')} className="cursor-pointer">
+            <DropdownMenuItem
+              onClick={() => handleNavigation('/profiles')}
+              className="cursor-pointer"
+              disabled={pathname === '/profiles'} // Disable if already on profiles page
+            >
               <User className="mr-2 h-4 w-4" />
               <span>{t('profiles_title')}</span>
             </DropdownMenuItem>

@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Inter } from 'next/font/google';
 import { I18nProvider } from '@/components/I18nProvider';
+import { LoadingProvider } from '@/components/LoadingProvider'; // Import LoadingProvider
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
@@ -22,7 +23,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="light" forceTheme="light" disableTransitionOnChange>
           <I18nProvider>
-            {children}
+            <LoadingProvider>
+              {/* Wrap children with LoadingProvider */}
+              {children}
+            </LoadingProvider>
             <Toaster />
           </I18nProvider>
         </ThemeProvider>

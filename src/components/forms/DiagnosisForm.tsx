@@ -33,6 +33,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useTranslation } from 'react-i18next';
 import imageCompression from 'browser-image-compression';
+import { MultiStepLoader } from '@/components/ui/multi-step-loader';
 
 const sortedSimplifiedSymptomTypes = [
   { value: 'abdominal-pain-discomfort', label: 'Abdominal Pain / Discomfort' },
@@ -311,6 +312,15 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  const loadingStates = [
+    { text: t('collecting_patient_data') },
+    { text: t('analyzing_symptoms') },
+    { text: t('correlating_data') },
+    { text: t('running_analysis') },
+    { text: t('generating_report') },
+    { text: t('finalizing_diagnosis') },
+  ];
 
   return (
     <FormProviderComponent {...form}>
@@ -604,7 +614,12 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                           type="number"
                           placeholder="e.g., 2"
                           value={num}
-                          onChange={(e) => field.onChange(`${e.target.value} ${unit}`)}
+                          min="0"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (Number(val) < 0) return;
+                            field.onChange(`${val} ${unit}`);
+                          }}
                           className="flex-grow"
                         />
                         <Select value={unit} onValueChange={(v) => field.onChange(`${num || '0'} ${v}`)}>
@@ -723,6 +738,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
           )}
         </div>
       </form>
+      <MultiStepLoader loadingStates={loadingStates} loading={isLoading} duration={1500} />
     </FormProviderComponent>
   );
 });

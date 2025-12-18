@@ -15,6 +15,7 @@ import { User, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { useLoading } from '@/components/LoadingProvider'; // Import useLoading
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
@@ -56,17 +57,22 @@ function ClientPageContent() {
   const [patientProfile, setPatientProfile] = useState<PatientProfile | null>(null);
   const router = useRouter();
   const { t } = useTranslation();
+  const { setIsLoading } = useLoading(); // Get setIsLoading from context
 
   useEffect(() => {
     try {
       const profileData = sessionStorage.getItem('selectedPatientProfile');
       if (profileData) {
         setPatientProfile(JSON.parse(profileData));
+        setIsLoading(false); // Turn off loader once profile is loaded
+      } else {
+        setIsLoading(false); // Turn off loader if no profile selected
       }
     } catch (error) {
       console.error('Could not parse patient profile from session storage', error);
+      setIsLoading(false); // Turn off loader on error
     }
-  }, []);
+  }, [setIsLoading]);
 
   const {
     form,
@@ -81,6 +87,18 @@ function ClientPageContent() {
     setCurrentStep,
   } = useDiagnosisForm(patientProfile);
 
+  // Scroll to top when viewMode changes to 'result'
+  useEffect(() => {
+    if (viewMode !== 'form') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [viewMode]);
+
+  const handleBackToProfiles = () => {
+    setIsLoading(true); // Set global loading to true
+    router.push('/profiles');
+  };
+
   if (!patientProfile) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -93,9 +111,9 @@ function ClientPageContent() {
             <CardDescription>{t('profiles_desc')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/profiles" className="mt-4 inline-block">
-              <Button>{t('back_to_profiles')}</Button>
-            </Link>
+            <Button onClick={handleBackToProfiles} className="mt-4 inline-block">
+              {t('back_to_profiles')}
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -106,26 +124,25 @@ function ClientPageContent() {
     <div className={`${inter.variable} font-body flex min-h-screen flex-col overflow-x-hidden`}>
       <AppHeader />
       <main className="container mx-auto w-full flex-grow px-4 pb-12 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => router.push('/profiles')} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            {t('back_to_profiles')}
-          </Button>
-        </div>
-
         <Card className="mb-8 border-primary/20 bg-primary/5">
-          <CardHeader className="flex flex-row items-center gap-4 py-4">
-            <div className="rounded-full bg-primary/10 p-2">
-              <User className="h-6 w-6 text-primary" />
+          <CardHeader className="flex flex-row items-center justify-between gap-4 py-4">
+            <div className="flex items-center gap-4">
+              <div className="rounded-full bg-primary/10 p-2">
+                <User className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-xl capitalize">
+                  {t('start_diagnosis')}: {patientProfile.name}
+                </CardTitle>
+                <CardDescription>
+                  {patientProfile.age} {t('age')} • {t(patientProfile.sex)}
+                </CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle className="text-xl capitalize">
-                {t('start_diagnosis')}: {patientProfile.name}
-              </CardTitle>
-              <CardDescription>
-                {patientProfile.age} {t('age')} • {t(patientProfile.sex)}
-              </CardDescription>
-            </div>
+            <Button variant="ghost" onClick={handleBackToProfiles} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              {t('back_to_profiles')}
+            </Button>
           </CardHeader>
         </Card>
 
