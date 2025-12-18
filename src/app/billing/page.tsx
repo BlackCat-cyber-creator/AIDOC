@@ -50,7 +50,7 @@ export default function BillingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.uid,
-          planName: 'AIDOC Pro Max',
+          planName: 'AIDOC Premium',
           amount: 155000, // Roughly $9.99 USD
           email: user.email,
           name: user.displayName,
@@ -101,7 +101,7 @@ export default function BillingPage() {
       premium: false,
     },
     {
-      name: 'Pro Max',
+      name: 'Premium',
       price: '$9.99', // Updated to USD look
       period: '/month',
       description: 'The complete healthcare assistant',
@@ -114,7 +114,7 @@ export default function BillingPage() {
         'Priority AI processing',
       ],
       current: isPremium,
-      buttonText: isPremium ? 'Current Plan' : 'Upgrade to Pro',
+      buttonText: isPremium ? 'Current Plan' : 'Upgrade to Premium',
       premium: true,
     },
   ];
@@ -133,7 +133,7 @@ export default function BillingPage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold tracking-tight mb-4">Choose Your Plan</h1>
           <p className="text-xl text-muted-foreground">
-            Get more accurate results and manage your whole family with Pro.
+            Get more accurate results and manage your whole family with Premium.
           </p>
         </div>
 

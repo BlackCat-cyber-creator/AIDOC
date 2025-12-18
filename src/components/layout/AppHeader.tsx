@@ -125,7 +125,7 @@ export function AppHeader() {
                 variant={isPremium ? 'default' : 'secondary'}
                 className={isPremium ? 'bg-yellow-500 hover:bg-yellow-600 h-5 text-[10px]' : 'h-5 text-[10px]'}
               >
-                {isPremium ? 'PRO' : 'FREE'}
+                {isPremium ? 'PREMIUM' : 'FREE'}
               </Badge>
             </DropdownMenuItem>
 

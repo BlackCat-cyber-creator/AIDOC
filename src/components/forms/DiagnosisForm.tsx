@@ -547,7 +547,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                               <div>
                                 <p className="text-sm font-semibold">{t('upload_photo')}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {isPremium ? 'Use camera or select file' : t('upgrade_pro')}
+                                  {isPremium ? 'Use camera or select file' : t('upgrade_premium')}
                                 </p>
                               </div>
                             </div>

@@ -161,7 +161,7 @@ export function useDiagnosisForm(patientProfile: PatientProfile | null): Diagnos
         title: 'Daily Limit Reached',
         description: isPremium
           ? `You have reached the daily limit of ${PRO_DAILY_LIMIT} diagnoses.`
-          : `You have used your ${FREE_DAILY_LIMIT} free daily diagnoses. Upgrade to Pro for more!`,
+          : `You have used your ${FREE_DAILY_LIMIT} free daily diagnoses. Upgrade to Premium for more!`,
       });
       return;
     }

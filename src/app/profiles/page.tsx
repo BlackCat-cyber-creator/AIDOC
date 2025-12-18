@@ -101,7 +101,7 @@ export default function ProfilesPage() {
 
     const limit = isPremium ? PRO_PROFILE_LIMIT : FREE_PROFILE_LIMIT;
     if (profiles.length >= limit && !selectedProfile) {
-      alert(isPremium ? t('premium_limit_reached') : t('upgrade_pro'));
+      alert(isPremium ? t('premium_limit_reached') : t('upgrade_premium'));
       return;
     }
 
@@ -311,7 +311,7 @@ export default function ProfilesPage() {
                     onClick={(e) => {
                       if (isProfileFull) {
                         e.preventDefault();
-                        alert(isPremium ? t('premium_limit_reached') : t('upgrade_pro'));
+                        alert(isPremium ? t('premium_limit_reached') : t('upgrade_premium'));
                       } else {
                         setSelectedProfile(null);
                       }
