@@ -13,7 +13,8 @@
   # This adds a file watcher to startup the firebase emulators. The emulators will only start if
   # a firebase.json file is written into the user's directory
   services.firebase.emulators = {
-    detect = true;
+    # Disabling because we are using prod backends right now
+    detect = false;
     projectId = "demo-app";
     services = ["auth" "firestore"];
   };
