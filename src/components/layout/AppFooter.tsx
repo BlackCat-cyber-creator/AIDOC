@@ -3,7 +3,7 @@
 import React from 'react';
 import Iridescence from '../Iridescence';
 import LiquidChrome from '../LiquidChrome';
-import { useTheme } from "next-themes";
+import { useTheme } from 'next-themes';
 
 export function AppFooter() {
   const currentYear = new Date().getFullYear();
@@ -12,14 +12,8 @@ export function AppFooter() {
   return (
     <footer className="py-10 border-b border-border relative h-21 sm:h-25 md:h-29 lg:h-33">
       <div className="absolute inset-0 z-0">
-        {theme === "light" ? (
-          <Iridescence
-            color={[1, 0.9, 0.9]}
-            mouseReact={false}
-            amplitude={0}
-            speed={0.5}
-            horizontalStretch={0.4}
-          />
+        {theme === 'light' ? (
+          <Iridescence color={[1, 0.9, 0.9]} mouseReact={false} amplitude={0} speed={0.5} horizontalStretch={0.4} />
         ) : (
           <LiquidChrome
             baseColor={[0.15, 0.1, 0.3]}
@@ -34,7 +28,7 @@ export function AppFooter() {
         <p className="font-semibold">Disclaimer:</p>
         <p>
           AIDOC © {currentYear}. This tool provides information for educational purposes only and is not a substitute
-          for professional medical advice, diagnosis, or treatment.
+          for professional medical advice.
         </p>
       </div>
     </footer>
