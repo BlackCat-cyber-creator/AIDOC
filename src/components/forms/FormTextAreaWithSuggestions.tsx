@@ -1,20 +1,16 @@
 import * as React from 'react';
-import { useController, UseFormReturn, FieldPath, FieldValues } from 'react-hook-form';
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useController, Control, FieldValues, FieldPath } from 'react-hook-form';
+import { FormControl, FormDescription, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { X as XIcon } from 'lucide-react';
-
-interface SuggestionItem {
-  value: string;
-  label: string;
-}
+import { useTranslation } from 'react-i18next';
 
 interface FormTextAreaWithSuggestionsProps<TFieldValues extends FieldValues> {
-  form: UseFormReturn<TFieldValues>;
+  control: Control<TFieldValues>;
   name: FieldPath<TFieldValues>;
   label: string;
   placeholder: string;
@@ -24,7 +20,7 @@ interface FormTextAreaWithSuggestionsProps<TFieldValues extends FieldValues> {
 }
 
 export function FormTextAreaWithSuggestions<TFieldValues extends FieldValues>({
-  form,
+  control,
   name,
   label,
   placeholder,
@@ -32,50 +28,38 @@ export function FormTextAreaWithSuggestions<TFieldValues extends FieldValues>({
   description,
   required = false,
 }: FormTextAreaWithSuggestionsProps<TFieldValues>) {
+  const { t } = useTranslation();
   const { field, fieldState } = useController({
     name,
-    control: form.control,
+    control,
   });
 
   const hasError = !!fieldState.error;
   const isValid = fieldState.isTouched && !hasError;
 
   const [popoverOpen, setPopoverOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState(
-    Array.isArray(field.value) ? field.value.join('\n') : typeof field.value === 'string' ? field.value : ''
-  );
+  const [inputValue, setInputValue] = React.useState(field.value?.toString() || '');
 
   const filteredSuggestions = React.useMemo(() => {
     const currentLine = inputValue.split('\n').pop()?.toLowerCase() || '';
-    const existingValues = new Set((Array.isArray(field.value) ? field.value : []).map((v: string) => v.toLowerCase()));
-    return suggestions.filter(
-      (suggestion) => suggestion.toLowerCase().includes(currentLine) && !existingValues.has(suggestion.toLowerCase())
-    );
-  }, [inputValue, suggestions, field.value]);
+    if (!currentLine.trim()) return [];
 
-  React.useEffect(() => {
-    const currentFieldValue = Array.isArray(field.value)
-      ? field.value.join('\n')
-      : typeof field.value === 'string'
-        ? field.value
-        : '';
-    if (currentFieldValue !== inputValue) {
-      setInputValue(currentFieldValue);
-    }
-  }, [field.value, inputValue]);
+    return suggestions.filter((suggestion) => suggestion.toLowerCase().includes(currentLine));
+  }, [inputValue, suggestions]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputValue(e.target.value);
-    field.onChange(e.target.value); // Pass the string value directly
-    setPopoverOpen(true); // Open popover on input change
+    const value = e.target.value;
+    setInputValue(value);
+    field.onChange(value);
+    setPopoverOpen(true);
   };
 
   const handleSelectSuggestion = (suggestion: string) => {
     const lines = inputValue.split('\n');
-    lines[lines.length - 1] = suggestion; // Replace last line with suggestion
-    const newValue = lines.join('\n');
+    lines[lines.length - 1] = suggestion;
+    const newValue = lines.join('\n') + '\n';
     setInputValue(newValue);
-    field.onChange(newValue); // Pass the new string value directly
+    field.onChange(newValue);
     setPopoverOpen(false);
   };
 
@@ -85,7 +69,7 @@ export function FormTextAreaWithSuggestions<TFieldValues extends FieldValues>({
         {label} {required && <span className="text-destructive">*</span>}
       </FormLabel>
       <FormControl>
-        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <Popover open={popoverOpen && filteredSuggestions.length > 0} onOpenChange={setPopoverOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
               <Textarea
@@ -100,34 +84,25 @@ export function FormTextAreaWithSuggestions<TFieldValues extends FieldValues>({
               {hasError && <XIcon className="absolute right-3 top-3 h-4 w-4 text-destructive" />}
             </div>
           </PopoverTrigger>
-          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-            <Command>
-              <CommandInput
-                placeholder={`Search ${label.toLowerCase()}...`}
-                className="h-9"
-                value={inputValue.split('\n').pop() || ''}
-                onValueChange={(value) => {
-                  const lines = inputValue.split('\n');
-                  lines[lines.length - 1] = value;
-                  const newValue = lines.join('\n');
-                  setInputValue(newValue);
-                  field.onChange(newValue); // Pass the new string value directly
-                }}
-              />
+          <PopoverContent
+            className="w-[--radix-popover-trigger-width] p-0"
+            align="start"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <Command shouldFilter={false}>
               <ScrollArea className="h-[200px]">
                 <CommandList>
-                  <CommandEmpty>No {label.toLowerCase()} found.</CommandEmpty>
-                  <CommandGroup>
-                    {filteredSuggestions.map((suggestion) => (
-                      <CommandItem
-                        key={suggestion}
-                        value={suggestion}
-                        onSelect={() => handleSelectSuggestion(suggestion)}
-                      >
-                        {suggestion}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
+                  {filteredSuggestions.length > 0 ? (
+                    <CommandGroup>
+                      {filteredSuggestions.map((item) => (
+                        <CommandItem key={item} value={item} onSelect={() => handleSelectSuggestion(item)}>
+                          {item}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ) : (
+                    <CommandEmpty>{t('none')}</CommandEmpty>
+                  )}
                 </CommandList>
               </ScrollArea>
             </Command>

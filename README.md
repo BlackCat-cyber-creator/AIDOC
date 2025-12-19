@@ -4,21 +4,20 @@
 
 ## Description
 
-AIDOC is a modern web application designed to assist users in understanding potential medical diagnoses based on entered symptoms. It leverages AI to provide educational information and insights into various health conditions. 
+AIDOC is a modern web application designed to assist users in understanding potential medical diagnoses based on entered symptoms. It leverages AI to provide educational information and insights into various health conditions.
 **Please note: AIDOC is for educational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment.**
 
 ## Features
 
-*   AI-powered symptom analysis and potential diagnosis generation.
-*   Interactive 3D human anatomy models for visual understanding.
-*   Dynamic and engaging background effects with Iridescence (light mode) and Liquid Chrome (dark mode).
-*   Responsive user interface designed for seamless experience across mobile and desktop devices.
-*   Theme toggling (light/dark mode).
+- AI-powered symptom analysis and potential diagnosis generation.
+- Interactive 3D human anatomy models for visual understanding.
+- Dynamic and engaging background effects with Iridescence (light mode)
+- Responsive user interface designed for seamless experience across mobile and desktop devices.
 
 ## Technologies Used
 
-*   **Frontend:** Next.js, React, TypeScript, Tailwind CSS, OGL (for 3D and shader effects), `next-themes` (for theme management)
-*   **AI Integration:** Genkit (for AI flows)
+- **Frontend:** Next.js, React, TypeScript, Tailwind CSS, OGL (for 3D and shader effects), `next-themes` (for theme management)
+- **AI Integration:** Genkit (for AI flows)
 
 ## Installation & Local Development
 
@@ -76,8 +75,8 @@ Once the application is running:
 
 We welcome contributions! If you have suggestions for improvements, bug reports, or want to contribute code, please feel free to:
 
-*   Open an issue to discuss your ideas or report bugs.
-*   Fork the repository and submit a pull request with your changes.
+- Open an issue to discuss your ideas or report bugs.
+- Fork the repository and submit a pull request with your changes.
 
 ## License
 
@@ -85,6 +84,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgements
 
-*   Built with Next.js and powered by Google Gemini.
-*   Thanks to the developers of OGL for the beautiful shader effects.
-*   Thanks to the open-source community for amazing tools and libraries.
+- Built with Next.js and powered by Google Gemini.
+- Thanks to the developers of OGL for the beautiful shader effects.
+- Thanks to the open-source community for amazing tools and libraries.

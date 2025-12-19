@@ -40,9 +40,9 @@ import { useLoading } from '@/components/LoadingProvider'; // Import useLoading
 type ProfileWithDocId = PatientProfile & { docId: string };
 
 const FREE_PROFILE_LIMIT = 2;
-const PRO_PROFILE_LIMIT = 10;
-const FREE_DAILY_LIMIT = 6;
-const PRO_DAILY_LIMIT = 50;
+const PRO_PROFILE_LIMIT = 5;
+const FREE_DAILY_LIMIT = 4;
+const PRO_DAILY_LIMIT = 25;
 
 export default function ProfilesPage() {
   const [user, loading] = useAuthState(auth);
