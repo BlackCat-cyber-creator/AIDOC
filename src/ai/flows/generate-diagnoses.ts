@@ -21,6 +21,7 @@ const GenerateDiagnosesInputSchema = z.object({
     radiation: z.string().optional(),
     triggers: z.array(z.string()),
     extras: z.array(z.string()),
+    symptomImageUrl: z.string().optional(),
   }),
   isPremium: z.boolean().default(false),
   language: z.string().default('en'),
@@ -44,32 +45,6 @@ export async function generateDiagnoses(input: GenerateDiagnosesInput): Promise<
   return generateDiagnosesFlow(input);
 }
 
-const generateDiagnosesPrompt = ai.definePrompt({
-  name: 'generateDiagnosesPrompt',
-  input: { schema: GenerateDiagnosesInputSchema },
-  output: { schema: GenerateDiagnosesOutputSchema },
-  prompt: `Act as a professional medical AI.
-Lang: {{language}} (Translate results only).
-Limit: {{#if isPremium}}5{{else}}3{{/if}} results.
-
-Format (JSON):
-{
-  "diagnoses": [{
-    "condition": "name",
-    "explanation": "1-2 sentences",
-    "urgency": "urgent"|"non-urgent"|"self-care",
-    "next_steps": "actionable steps",
-    "confidence": 1-100 (integer)
-  }]
-}
-
-Inputs:
-Patient: Age {{profile.age}}, {{profile.sex}}, Conditions: {{profile.chronic_conditions}}, Meds: {{profile.medications}}, Allergies: {{profile.allergies}}.
-Symptoms: {{symptoms.location}}, {{symptoms.type}}, Severity: {{symptoms.severity}}/10, Duration: {{symptoms.duration}}, Onset: {{symptoms.onset}}.
-{{#if symptoms.radiation}}Radiation: {{symptoms.radiation}}{{/if}}
-Details: {{symptoms.triggers}}, {{symptoms.extras}}.`,
-});
-
 const aiResponseCache = new Map<string, GenerateDiagnosesOutput>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -87,8 +62,53 @@ const generateDiagnosesFlow = ai.defineFlow(
     const cachedResponse = aiResponseCache.get(cacheKey);
     if (cachedResponse) return cachedResponse;
 
-    const promptResponse = await generateDiagnosesPrompt(cleanInput);
-    const validatedData = GenerateDiagnosesOutputSchema.parse(promptResponse.output);
+    // Construct the text prompt
+    let promptText = `Act as a professional medical AI.
+Lang: ${cleanInput.language} (Translate results only).
+Limit: ${cleanInput.isPremium ? 5 : 3} results.
+
+Format (JSON):
+{
+  "diagnoses": [{
+    "condition": "name",
+    "explanation": "1-2 sentences",
+    "urgency": "urgent"|"non-urgent"|"self-care",
+    "next_steps": "actionable steps",
+    "confidence": 1-100 (integer)
+  }]
+}
+
+Inputs:
+Patient: Age ${cleanInput.profile.age}, ${cleanInput.profile.sex}, Conditions: ${cleanInput.profile.chronic_conditions.join(', ')}, Meds: ${cleanInput.profile.medications.join(', ')}, Allergies: ${cleanInput.profile.allergies.join(', ')}.
+Symptoms: ${cleanInput.symptoms.location.join(', ')}, ${cleanInput.symptoms.type.join(', ')}, Severity: ${cleanInput.symptoms.severity}/10, Duration: ${cleanInput.symptoms.duration}, Onset: ${cleanInput.symptoms.onset}.
+`;
+
+    if (cleanInput.symptoms.radiation) {
+      promptText += `Radiation: ${cleanInput.symptoms.radiation}\n`;
+    }
+
+    promptText += `Details: ${cleanInput.symptoms.triggers.join(', ')}, ${cleanInput.symptoms.extras.join(', ')}.`;
+
+    // Prepare content for multimodal input
+    const promptContent: any[] = [{ text: promptText }];
+
+    // Add image if available
+    if (cleanInput.symptoms.symptomImageUrl) {
+      promptContent.push({ media: { url: cleanInput.symptoms.symptomImageUrl } });
+      promptText += '\n(An image of the symptom is attached for analysis.)';
+    }
+
+    const response = await ai.generate({
+      model: 'googleai/gemini-2.5-flash-lite',
+      prompt: promptContent,
+      output: { schema: GenerateDiagnosesOutputSchema },
+    });
+
+    if (!response.output) {
+      throw new Error('Failed to generate diagnosis');
+    }
+
+    const validatedData = response.output;
 
     aiResponseCache.set(cacheKey, validatedData);
     setTimeout(() => aiResponseCache.delete(cacheKey), CACHE_TTL_MS);

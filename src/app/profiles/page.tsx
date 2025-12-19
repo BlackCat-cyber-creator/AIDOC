@@ -35,7 +35,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
-import { useLoading } from '@/components/LoadingProvider'; // Import useLoading
+import { useLoading } from '@/components/LoadingProvider';
+import Carousel from '@/components/ui/carousel';
 
 type ProfileWithDocId = PatientProfile & { docId: string };
 
@@ -51,10 +52,12 @@ export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<ProfileWithDocId[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<ProfileWithDocId | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [profileToDelete, setProfileToDelete] = useState<ProfileWithDocId | null>(null);
   const [isProfilesLoading, setIsProfilesLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [diagnosisCount, setDiagnosisCount] = useState(0);
-  const { setIsLoading } = useLoading(); // Get setIsLoading from context
+  const { setIsLoading } = useLoading();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -67,7 +70,7 @@ export default function ProfilesPage() {
   const fetchUserDataAndProfiles = async () => {
     if (!user) return;
     setIsProfilesLoading(true);
-    setIsLoading(true); // Set global loading to true when fetching profiles
+    setIsLoading(true);
     try {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       const today = new Date().toISOString().split('T')[0];
@@ -95,7 +98,7 @@ export default function ProfilesPage() {
       console.error('Error fetching data: ', error);
     } finally {
       setIsProfilesLoading(false);
-      setIsLoading(false); // Set global loading to false after fetching profiles
+      setIsLoading(false);
     }
   };
 
@@ -108,7 +111,7 @@ export default function ProfilesPage() {
       return;
     }
 
-    setIsLoading(true); // Set global loading to true when submitting form
+    setIsLoading(true);
     try {
       if (selectedProfile?.docId) {
         const profileDoc = doc(db, 'users', user.uid, 'userProfile', selectedProfile.docId);
@@ -123,27 +126,36 @@ export default function ProfilesPage() {
     } catch (error) {
       console.error('Error saving profile: ', error);
     } finally {
-      setIsLoading(false); // Set global loading to false after form submission
+      setIsLoading(false);
     }
   };
 
-  const handleDeleteProfile = async (docId: string) => {
-    if (!user) return;
-    setIsLoading(true); // Set global loading to true when deleting profile
+  const confirmDeleteProfile = (profile: ProfileWithDocId) => {
+    setProfileToDelete(profile);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteProfile = async () => {
+    if (!user || !profileToDelete) return;
+    setIsLoading(true);
     try {
-      const profileDoc = doc(db, 'users', user.uid, 'userProfile', docId);
+      const profileDoc = doc(db, 'users', user.uid, 'userProfile', profileToDelete.docId);
       await deleteDoc(profileDoc);
       await fetchUserDataAndProfiles();
+      setIsDeleteDialogOpen(false);
+      setProfileToDelete(null);
     } catch (error) {
       console.error('Error deleting profile: ', error);
     } finally {
-      setIsLoading(false); // Set global loading to false after deleting profile
+      setIsLoading(false);
     }
   };
 
   const handleStartDiagnosis = (profile: ProfileWithDocId) => {
-    setIsLoading(true); // Set global loading to true when starting diagnosis
-    sessionStorage.setItem('selectedPatientProfile', JSON.stringify(profile));
+    setIsLoading(true);
+    // Remove profile picture from session storage data to avoid quota limits
+    const { profile_picture, ...profileData } = profile;
+    sessionStorage.setItem('selectedPatientProfile', JSON.stringify(profileData));
     router.push('/diagnosis');
   };
 
@@ -152,6 +164,38 @@ export default function ProfilesPage() {
 
   const isDiagnosisFull = diagnosisCount >= currentDailyLimit;
   const isProfileFull = profiles.length >= currentProfileLimit;
+
+  // Transform profiles into carousel slides
+  const carouselSlides = profiles.map((profile) => ({
+    title: profile.name,
+    button: t('start_diagnosis'),
+    src: profile.profile_picture || '/images/default-profile-bg.jpg',
+    age: profile.age,
+    sex: profile.sex,
+    chronic_conditions: profile.chronic_conditions,
+    medications: profile.medications,
+    allergies: profile.allergies,
+    isAddNew: false,
+  }));
+
+  // Add the "Add New Profile" slide at the end
+  carouselSlides.push({
+    title: t('add_new_profile'),
+    button: isProfileFull ? t('premium_limit_reached') : t('create_account'),
+    src: '',
+    age: '',
+    sex: '',
+    isAddNew: true,
+  });
+
+  const handleAddNewProfile = () => {
+    if (isProfileFull) {
+      alert(isPremium ? t('premium_limit_reached') : t('upgrade_premium'));
+    } else {
+      setSelectedProfile(null);
+      setIsFormOpen(true);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden">
@@ -164,7 +208,6 @@ export default function ProfilesPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            {/* Usage Stats Card */}
             <Card
               className={cn(
                 'p-4 flex items-center gap-3 min-w-[180px] transition-colors border',
@@ -182,7 +225,6 @@ export default function ProfilesPage() {
               </div>
             </Card>
 
-            {/* Subscription Card */}
             <Card
               className={cn(
                 'p-4 flex items-center gap-3 min-w-[180px] transition-colors border',
@@ -207,9 +249,9 @@ export default function ProfilesPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {isProfilesLoading || loading ? (
-            Array.from({ length: 3 }).map((_, i) => (
+        {isProfilesLoading || loading ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
               <Card key={i} className="flex flex-col h-[280px] animate-pulse">
                 <CardHeader className="flex flex-row items-center gap-4">
                   <Skeleton className="h-12 w-12 rounded-full" />
@@ -223,96 +265,46 @@ export default function ProfilesPage() {
                   <Skeleton className="h-4 w-5/6" />
                 </CardContent>
               </Card>
-            ))
-          ) : (
-            <>
-              {profiles.map((profile) => (
-                <Card
-                  key={profile.docId}
-                  className="flex flex-col hover:shadow-md transition-shadow relative overflow-hidden"
-                >
-                  <CardHeader className="flex flex-row items-center gap-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        <User className="h-6 w-6" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle className="text-lg font-bold">{profile.name}</CardTitle>
-                      <CardDescription>
-                        {profile.age} {t('age')} • {t(profile.sex)}
-                      </CardDescription>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex-grow space-y-2">
-                    <div className="text-sm">
-                      <span className="font-semibold text-muted-foreground">{t('conditions')}:</span>{' '}
-                      {profile.chronic_conditions || t('none')}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-semibold text-muted-foreground">{t('medications')}:</span>{' '}
-                      {profile.medications || t('none')}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-semibold text-muted-foreground">{t('allergies')}:</span>{' '}
-                      {profile.allergies || t('none')}
-                    </div>
-                  </CardContent>
-                  <div className="p-4 flex justify-between items-center border-t bg-muted/5">
-                    <Button onClick={() => handleStartDiagnosis(profile)} size="sm">
-                      {t('start_diagnosis')}
-                    </Button>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => {
-                          setSelectedProfile(profile);
-                          setIsFormOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t('delete_profile')}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {t('delete_confirm', { name: profile.name })}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteProfile(profile.docId)}
-                              className="bg-destructive hover:bg-destructive/80"
-                            >
-                              {t('delete')}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="mb-12">
+              <Carousel
+                slides={carouselSlides}
+                t={t}
+                onSlideClick={(index) => {
+                  // Optional: maybe just center it or do nothing
+                }}
+                onEditProfile={(index) => {
+                  // Check if it's not the last "Add New" slide
+                  if (index < profiles.length) {
+                    setSelectedProfile(profiles[index]);
+                    setIsFormOpen(true);
+                  }
+                }}
+                onDeleteProfile={(index) => {
+                  // Check if it's not the last "Add New" slide
+                  if (index < profiles.length) {
+                    confirmDeleteProfile(profiles[index]);
+                  }
+                }}
+                onStartDiagnosis={(index) => {
+                  // Check if it's not the last "Add New" slide
+                  if (index < profiles.length) {
+                    handleStartDiagnosis(profiles[index]);
+                  }
+                }}
+                onAddNewProfile={handleAddNewProfile}
+              />
+            </div>
 
+            <div className="flex justify-center mt-8">
               <Dialog
                 open={isFormOpen}
                 onOpenChange={(open) => {
                   setIsFormOpen(open);
                   if (open) {
-                    // Only set loading if the dialog is actually opening and not due to a limit alert
                     if (!isProfileFull) {
                       setIsLoading(true);
                     }
@@ -321,33 +313,7 @@ export default function ProfilesPage() {
                   }
                 }}
               >
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      'h-full min-h-[200px] flex-col gap-4 border-dashed hover:border-primary hover:bg-primary/5 transition-all',
-                      isProfileFull && 'opacity-60 grayscale cursor-not-allowed border-muted'
-                    )}
-                    onClick={(e) => {
-                      if (isProfileFull) {
-                        e.preventDefault();
-                        alert(isPremium ? t('premium_limit_reached') : t('upgrade_premium'));
-                      } else {
-                        setSelectedProfile(null);
-                      }
-                    }}
-                  >
-                    <div className="rounded-full bg-primary/10 p-4">
-                      <PlusCircle className="h-8 w-8 text-primary" />
-                    </div>
-                    <div className="text-center px-4">
-                      <p className="font-semibold">{t('add_new_profile')}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {isProfileFull ? t('premium_limit_reached') : t('create_account')}
-                      </p>
-                    </div>
-                  </Button>
-                </DialogTrigger>
+                {/* Removed DialogTrigger button since it's now in the carousel */}
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
                     <DialogTitle>{selectedProfile ? t('edit_profile') : t('add_new_profile')}</DialogTitle>
@@ -357,16 +323,33 @@ export default function ProfilesPage() {
                     <PatientProfileForm
                       onSubmit={handleFormSubmit}
                       initialData={selectedProfile || undefined}
-                      // isLoading={isLoading} // PatientProfileForm already handles its own loading state
                       isPremium={isPremium}
                       submitButtonText={selectedProfile ? t('update_profile') : t('save_profile')}
                     />
                   </div>
                 </DialogContent>
               </Dialog>
-            </>
-          )}
-        </div>
+            </div>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t('delete_profile')}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t('delete_confirm', { name: profileToDelete?.name })}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteProfile} className="bg-destructive hover:bg-destructive/80">
+                    {t('delete')}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        )}
       </main>
       <AppFooter />
     </div>

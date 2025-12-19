@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -19,15 +19,17 @@ import { patientProfileSchema, PatientProfile } from '@/lib/schema';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { SexIcon3D } from '@/components/3d/SexIcon3D';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { medicalData, ageIconMap, getAgeIconAndLabel } from '@/lib/medical-data';
+import { medicalData, getAgeIconAndLabel } from '@/lib/medical-data';
 import { FormTextAreaWithSuggestions } from '@/components/forms/FormTextAreaWithSuggestions';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import imageCompression from 'browser-image-compression';
 
 interface PatientProfileFormProps {
   onSubmit: (values: PatientProfile) => Promise<void>;
   initialData?: Partial<PatientProfile>;
-  isLoading: boolean;
+  isLoading?: boolean;
   isPremium: boolean;
   submitButtonText?: string;
 }
@@ -42,6 +44,9 @@ export function PatientProfileForm({
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language.split('-')[0] || 'en';
   const langData = medicalData[currentLang] || medicalData.en;
+  const [profilePreview, setProfilePreview] = useState<string | null>(initialData?.profile_picture || null);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<PatientProfile>({
     resolver: zodResolver(patientProfileSchema),
@@ -52,6 +57,7 @@ export function PatientProfileForm({
       chronic_conditions: '',
       medications: '',
       allergies: '',
+      profile_picture: '',
     },
   });
 
@@ -64,6 +70,49 @@ export function PatientProfileForm({
     { value: 'other', label: t('other') },
   ];
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsCompressing(true);
+      try {
+        const options = {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 800,
+          useWebWorker: true,
+        };
+        const compressedFile = await imageCompression(file, options);
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          setProfilePreview(result);
+          form.setValue('profile_picture', result);
+          setIsCompressing(false);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error('Error compressing image:', error);
+        // Fallback to original file if compression fails
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          setProfilePreview(result);
+          form.setValue('profile_picture', result);
+          setIsCompressing(false);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const removeProfilePicture = () => {
+    setProfilePreview(null);
+    form.setValue('profile_picture', '');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <FormProviderComponent {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -72,6 +121,46 @@ export function PatientProfileForm({
             <CardTitle>{t('profiles_title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="relative">
+                <Avatar className="h-24 w-24 border-2 border-primary/20">
+                  <AvatarImage src={profilePreview || ''} className="object-cover" />
+                  <AvatarFallback className="text-2xl font-semibold bg-primary/5">
+                    {isCompressing ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : form.watch('name') ? (
+                      form.watch('name').charAt(0).toUpperCase()
+                    ) : (
+                      '?'
+                    )}
+                  </AvatarFallback>
+                </Avatar>
+                {profilePreview && !isCompressing && (
+                  <button
+                    type="button"
+                    onClick={removeProfilePicture}
+                    className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
+                  disabled={isCompressing}
+                >
+                  {isCompressing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {t('upload_profile')}
+                </Button>
+              </div>
+            </div>
+
             <FormField
               control={form.control}
               name="name"
@@ -185,8 +274,8 @@ export function PatientProfileForm({
           </CardContent>
         </Card>
         <div className="flex justify-end">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button type="submit" disabled={isLoading || isCompressing}>
+            {(isLoading || isCompressing) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {submitButtonText || t('save_profile')}
           </Button>
         </div>

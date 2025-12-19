@@ -8,6 +8,7 @@ export const patientProfileSchema = z.object({
   chronic_conditions: z.string().optional().default(''),
   medications: z.string().optional().default(''),
   allergies: z.string().optional().default(''),
+  profile_picture: z.string().optional().default(''),
 });
 
 export type PatientProfile = z.infer<typeof patientProfileSchema>;

@@ -97,6 +97,7 @@ export function AppHeader() {
         </h1>
         <div className="flex justify-center items-center h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-40 lg:w-40">
           <AppIcon3D
+            key={isMobile ? 'mobile-app-icon' : 'desktop-app-icon'} // Added key for remounting
             modelPath="/models/app_icon.glb"
             scale={isMobile ? 0.5 : 0.8}
             position={isMobile ? [0, -0.5, 0] : [0, -0.7, 0]}
