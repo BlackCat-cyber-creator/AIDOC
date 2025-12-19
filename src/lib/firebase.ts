@@ -9,7 +9,7 @@ const firebaseConfig = {
   apiKey: 'AIzaSyDKtO2AI_EVSnK6XGDuXJNRPrAZkUBl3Qo',
   authDomain: 'aidoc-ze7io.firebaseapp.com',
   projectId: 'aidoc-ze7io',
-  storageBucket: 'aidoc-ze7io.appspot.com',
+  storageBucket: 'aidoc-ze7io.firebasestorage.app',
   messagingSenderId: '185704066658',
   appId: '1:185704066658:web:f86ecf5121eb8babe32b3b',
 };
