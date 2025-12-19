@@ -3,6 +3,7 @@ import withBundleAnalyzer from '@next/bundle-analyzer';
 import withPWA from 'next-pwa';
 
 const nextConfig: NextConfig = {
+  output: 'export',
   images: {
     remotePatterns: [
       {
@@ -12,6 +13,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+    unoptimized: true,
   },
   typescript: {
     ignoreBuildErrors: true,
