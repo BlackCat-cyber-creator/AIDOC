@@ -3,11 +3,7 @@
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, type UseMutationResult } from '@tanstack/react-query';
-import {
-  generateDiagnoses,
-  type GenerateDiagnosesInput,
-  type GenerateDiagnosesOutput,
-} from '@/ai/flows/generate-diagnoses';
+import { type GenerateDiagnosesInput, type GenerateDiagnosesOutput } from '@/ai/flows/generate-diagnoses';
 import { FormSchema, type FormValues, type PatientProfile } from '@/lib/schema';
 import { useToast } from '@/hooks/use-toast';
 import { transformFormDataForAI } from '@/lib/utils';
@@ -35,6 +31,24 @@ export interface DiagnosisFormState {
 const TOTAL_FORM_STEPS = 3;
 const FREE_DAILY_LIMIT = 6;
 const PRO_DAILY_LIMIT = 50;
+
+// This function will now be called by the form hook to communicate with our new API route
+async function generateDiagnosesFromApi(input: GenerateDiagnosesInput): Promise<GenerateDiagnosesOutput> {
+  const response = await fetch('/api/diagnose', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to generate diagnosis from API.');
+  }
+
+  return response.json();
+}
 
 export function useDiagnosisForm(patientProfile: PatientProfile | null): DiagnosisFormState {
   const { toast } = useToast();
@@ -92,7 +106,7 @@ export function useDiagnosisForm(patientProfile: PatientProfile | null): Diagnos
     Error,
     GenerateDiagnosesInput
   >({
-    mutationFn: generateDiagnoses,
+    mutationFn: generateDiagnosesFromApi, // Use the new API calling function
     onSuccess: async (result) => {
       if (result && result.diagnoses) {
         // Increment usage count on success

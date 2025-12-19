@@ -3,7 +3,7 @@ import withBundleAnalyzer from '@next/bundle-analyzer';
 import withPWA from 'next-pwa';
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  // output: 'export', // Removed to enable API routes
   images: {
     remotePatterns: [
       {
