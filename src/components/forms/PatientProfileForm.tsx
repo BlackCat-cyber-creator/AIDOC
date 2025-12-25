@@ -117,10 +117,7 @@ export function PatientProfileForm({
     <FormProviderComponent {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>{t('profiles_title')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             <div className="flex flex-col items-center justify-center gap-4">
               <div className="relative">
                 <Avatar className="h-24 w-24 border-2 border-primary/20">

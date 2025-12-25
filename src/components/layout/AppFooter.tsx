@@ -15,7 +15,7 @@ export function AppFooter() {
         <p className="font-semibold">Disclaimer:</p>
         <p>
           AIDOC © {currentYear}. This tool provides information for educational purposes only and is not a substitute
-          for professional medical advice.
+          for professional medical diagnosis.
         </p>
       </div>
     </footer>

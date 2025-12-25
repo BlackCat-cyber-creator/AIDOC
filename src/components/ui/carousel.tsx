@@ -141,7 +141,7 @@ const Slide = ({ slide, index, current, handleSlideClick, onEdit, onDelete, onSt
                   {title}
                 </h2>
                 <p className="text-lg text-white/80 mb-4 font-medium">
-                  {age} {t('age')} • {t(sex)}
+                  {age} • {t(sex)}
                 </p>
 
                 {/* Medical Summary (Brief) */}
