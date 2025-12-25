@@ -78,7 +78,8 @@ export function AppHeader() {
     }
   };
 
-  const currentLanguageName = languages.find((l) => l.code === i18n.language)?.name || 'Language';
+  // Improved logic to find current language name, accounting for 'en-US', 'en-GB', etc.
+  const currentLanguageName = languages.find((l) => i18n.language.startsWith(l.code))?.name || 'English';
 
   if (!mounted) {
     return (
@@ -155,7 +156,7 @@ export function AppHeader() {
                       className="flex items-center justify-between cursor-pointer"
                     >
                       {lang.name}
-                      {i18n.language === lang.code && <Check className="h-4 w-4" />}
+                      {i18n.language.startsWith(lang.code) && <Check className="h-4 w-4" />}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuSubContent>

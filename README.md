@@ -5,7 +5,7 @@
 ## Description
 
 AIDOC is a modern web application designed to assist users in understanding potential medical diagnoses based on entered symptoms. It leverages AI to provide educational information and insights into various health conditions.
-**Please note: AIDOC is for educational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment.**
+**Please note: AIDOC is for educational purposes only and is not a substitute for professional medical advice.**
 
 ## Features
 
