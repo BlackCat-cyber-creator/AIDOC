@@ -14,7 +14,6 @@ const Model = React.memo(({ modelPath, animate }: ModelProps) => {
   const mixer = React.useRef<AnimationMixer | null>(null);
 
   React.useEffect(() => {
-    console.log('GLB Model Loaded: ', scene);
     if (animate && animations && animations.length > 0 && scene) {
       mixer.current = new AnimationMixer(scene as Group);
       animations.forEach((clip: any) => {

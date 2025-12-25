@@ -1,16 +1,31 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Inter } from 'next/font/google';
 import { I18nProvider } from '@/components/I18nProvider';
-import { LoadingProvider } from '@/components/LoadingProvider'; // Import LoadingProvider
+import { LoadingProvider } from '@/components/LoadingProvider';
+import { BillingListener } from '@/components/BillingListener';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'AIDOC',
   description: 'AI-powered medical diagnostic assistant - AIDOC',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'AIDOC',
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#5DADE2',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -24,7 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeProvider attribute="class" defaultTheme="light" forceTheme="light" disableTransitionOnChange>
           <I18nProvider>
             <LoadingProvider>
-              {/* Wrap children with LoadingProvider */}
+              <BillingListener />
               {children}
             </LoadingProvider>
             <Toaster />

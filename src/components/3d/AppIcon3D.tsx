@@ -68,7 +68,6 @@ function Model({ modelPath, animate }: { modelPath: string; animate?: boolean })
     }
   }, [scene, camera]);
 
-  console.log('GLB Model Loaded:', scene);
   return <primitive object={scene} />;
 }
 

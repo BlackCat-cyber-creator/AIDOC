@@ -15,9 +15,9 @@ import { doc, setDoc } from 'firebase/firestore';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { SignUpForm } from '@/components/auth/SignUpForm';
 import { AuthLayout } from '@/components/auth/AuthLayout';
+import { VerifyEmailState } from '@/components/auth/VerifyEmailState'; // Import the new component
 import { Loader2 } from 'lucide-react';
 import { useLoading } from '@/components/LoadingProvider';
-import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 
 export default function LoginPage() {
@@ -26,6 +26,7 @@ export default function LoginPage() {
   const [activeTab, setActiveTab] = useState('login');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const { setIsLoading: setGlobalLoading } = useLoading();
   const { t } = useTranslation();
 
@@ -55,20 +56,27 @@ export default function LoginPage() {
   useEffect(() => {
     if (user && !loading) {
       if (user.emailVerified) {
+        // Pre-fetch/Start navigation
         router.push('/profiles');
       } else {
+        // User needs verification, ensure loading is off so they see the UI
         setGlobalLoading(false);
         setIsLoading(false);
       }
     }
-    // If not loading and no user, make sure global loading is off
+
+    // If we're done loading auth state and no user is found, ensure UI is visible
     if (!loading && !user) {
       setGlobalLoading(false);
+      setIsLoading(false); // Ensure local loading is off too
     }
   }, [user, loading, router, setGlobalLoading]);
 
   const handleLogin = async (e: React.FormEvent, email, password) => {
-    e.preventDefault();
+    // e.preventDefault(); // Handled in the form component now via onSubmit(e,...) or just pass data
+    // The form component passes the event, so we can prevent default there or here.
+    // Ideally the form handles the event prevention.
+
     setError(null);
     setIsLoading(true);
     try {
@@ -78,7 +86,9 @@ export default function LoginPage() {
         setIsLoading(false);
         setGlobalLoading(false);
       }
+      // If verified, the useEffect will catch it and redirect
     } catch (err: any) {
+      console.error(err);
       setError(getErrorMessage(err.code));
       setIsLoading(false);
       setGlobalLoading(false);
@@ -86,7 +96,6 @@ export default function LoginPage() {
   };
 
   const handleSignup = async (e: React.FormEvent, name, email, password) => {
-    e.preventDefault();
     setError(null);
     setIsLoading(true);
 
@@ -101,13 +110,15 @@ export default function LoginPage() {
         displayName: name,
         email: email,
         createdAt: new Date(),
+        isPremium: false, // Default to free
       });
 
       await sendEmailVerification(user);
-      setError(t('verification_email_sent'));
+      // Don't set error here, just let the UI switch to verification state
       setIsLoading(false);
       setGlobalLoading(false);
     } catch (err: any) {
+      console.error(err);
       setError(getErrorMessage(err.code));
       setIsLoading(false);
       setGlobalLoading(false);
@@ -116,53 +127,65 @@ export default function LoginPage() {
 
   const handleResendVerification = async () => {
     if (user) {
+      setIsResending(true);
+      setError(null);
       try {
         await sendEmailVerification(user);
-        setError(t('verification_email_sent'));
+        // Show success message or toast? For now using error state to show info is a bit hacky but works
+        // Better: toast notification. But let's stick to the current UI pattern for simplicity unless requested.
+        // Actually, let's just clear error if it was "sent" before.
+        alert(t('verification_email_sent'));
       } catch (err: any) {
+        // If "too many requests", handle gracefully
         setError(getErrorMessage(err.code));
+      } finally {
+        setIsResending(false);
       }
     }
   };
 
   const handleLogout = async () => {
+    setIsLoading(true);
     await signOut(auth);
     setError(null);
+    setIsLoading(false);
   };
 
+  // 1. Loading State
   if (loading) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // If user is logged in but NOT verified, show verification screen
-  if (user && !user.emailVerified) {
-    return (
-      <div className="flex min-h-[100dvh] items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white dark:bg-black p-8 rounded-2xl shadow-input border border-neutral-200 dark:border-neutral-800 text-center">
-          <h2 className="text-2xl font-bold mb-4">{t('verify_email_title')}</h2>
-          <p className="text-neutral-600 dark:text-neutral-300 mb-6">
-            {t('verify_email_instructions', { email: user.email })}
-          </p>
-          <div className="space-y-4">
-            <Button onClick={handleResendVerification} className="w-full">
-              {t('resend_verification')}
-            </Button>
-            <Button onClick={handleLogout} variant="outline" className="w-full">
-              {t('back_to_login')}
-            </Button>
-          </div>
-          {error && <p className="mt-4 text-sm text-blue-600 font-medium">{error}</p>}
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-neutral-950">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="text-muted-foreground animate-pulse">{t('loading') || 'Loading...'}</p>
         </div>
       </div>
     );
   }
 
-  if (user && user.emailVerified) return null; // Prevent flicker before redirect
+  // 2. Verification State
+  if (user && !user.emailVerified) {
+    return (
+      <VerifyEmailState
+        email={user.email || ''}
+        onResend={handleResendVerification}
+        onLogout={handleLogout}
+        error={error}
+        isResending={isResending}
+      />
+    );
+  }
 
+  // 3. Authenticated State (Redirecting)
+  if (user && user.emailVerified) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-neutral-950">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // 4. Auth Forms State
   return (
     <AuthLayout activeTab={activeTab} setActiveTab={setActiveTab} error={error}>
       {activeTab === 'login' ? (

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Check, Crown, Loader2, Play } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore'; // Changed getDoc to onSnapshot for real-time updates
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { useLoading } from '@/components/LoadingProvider';
@@ -19,68 +19,59 @@ export default function BillingPage() {
   const [isPremium, setIsPremium] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const { setIsLoading } = useLoading();
+  const [isAndroid, setIsAndroid] = useState(false);
 
   useEffect(() => {
-    async function checkSubscription() {
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setIsPremium(userDoc.data().isPremium || false);
+    // Check if running in Android environment
+    setIsAndroid(typeof window !== 'undefined' && !!window.AndroidBilling);
+
+    // Real-time listener for user subscription status
+    // This allows the UI to update immediately when BillingListener updates the database
+    let unsubscribe = () => {};
+
+    if (user) {
+      const userRef = doc(db, 'users', user.uid);
+      unsubscribe = onSnapshot(
+        userRef,
+        (doc) => {
+          if (doc.exists()) {
+            const data = doc.data();
+            setIsPremium(data.isPremium || false);
+            // If we were processing and now we are premium, stop processing
+            if (data.isPremium && isProcessing) {
+              setIsProcessing(false);
+            }
+          }
+          setIsLoading(false);
+        },
+        (error) => {
+          console.error('Error listening to user data:', error);
+          setIsLoading(false);
         }
-      }
+      );
+    } else if (!loading) {
       setIsLoading(false);
     }
-    checkSubscription();
-  }, [user, setIsLoading]);
 
-  // Setup Global Callbacks for Android Studio to call
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).onPurchaseSuccess = async (purchaseToken: string) => {
-        if (user) {
-          try {
-            await updateDoc(doc(db, 'users', user.uid), {
-              isPremium: true,
-              premiumSince: new Date().toISOString(),
-              purchaseToken: purchaseToken,
-            });
-            setIsPremium(true);
-            alert(t('success_premium'));
-          } catch (e) {
-            console.error('Error updating premium status', e);
-          } finally {
-            setIsProcessing(false);
-          }
-        }
-      };
-
-      (window as any).onPurchaseError = (error: string) => {
-        setIsProcessing(false);
-        alert(t('error_purchase_failed') + ': ' + error);
-      };
-    }
-
-    return () => {
-      delete (window as any).onPurchaseSuccess;
-      delete (window as any).onPurchaseError;
-    };
-  }, [user, t]);
+    return () => unsubscribe();
+  }, [user, loading, setIsLoading, isProcessing]);
 
   const handleUpgrade = async () => {
     if (!user) return;
 
     // Check if we are inside the Android App (via Javascript Interface)
-    if (typeof window !== 'undefined' && (window as any).AndroidBilling) {
+    if (window.AndroidBilling) {
       setIsProcessing(true);
       try {
         // This calls the @JavascriptInterface in MainActivity.kt
-        (window as any).AndroidBilling.upgradeToPremium();
+        window.AndroidBilling.upgradeToPremium();
       } catch (e) {
         console.error('Native call failed', e);
         setIsProcessing(false);
         alert(t('error_native_connect'));
       }
     } else {
+      // Fallback for web users
       alert(t('error_android_only'));
     }
   };
@@ -170,7 +161,7 @@ export default function BillingPage() {
                 <Button
                   className="w-full h-12 text-lg font-bold"
                   variant={plan.premium ? 'default' : 'outline'}
-                  disabled={plan.current || isProcessing}
+                  disabled={plan.current || (plan.premium && isProcessing)}
                   onClick={plan.premium ? handleUpgrade : undefined}
                 >
                   {isProcessing && plan.premium ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -181,6 +172,12 @@ export default function BillingPage() {
             </Card>
           ))}
         </div>
+        {!isAndroid && (
+          <div className="mt-8 text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200 text-yellow-800 max-w-2xl mx-auto">
+            <p className="font-semibold">{t('mobile_app_only') || 'Subscription available in Mobile App only'}</p>
+            <p className="text-sm mt-1">{t('download_app_hint') || 'Please download our Android app to subscribe.'}</p>
+          </div>
+        )}
         <div className="mt-8 text-center text-sm text-muted-foreground">
           <p>{t('payment_notice')}</p>
         </div>
