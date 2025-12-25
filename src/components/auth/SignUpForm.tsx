@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Loader2, ArrowRight, User, Mail, Lock } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface SignUpFormProps {
@@ -27,97 +27,72 @@ export const SignUpForm = ({ onSubmit, isLoading }: SignUpFormProps) => {
   };
 
   return (
-    <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="w-full">
       <form className="my-8 space-y-4" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-2">
           <LabelInputContainer>
             <Label htmlFor="firstname">{t('first_name')}</Label>
-            <div className="relative">
-              <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="firstname"
-                placeholder="John"
-                type="text"
-                autoComplete="given-name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-                disabled={isLoading}
-                className="pl-9 h-11 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
-              />
-            </div>
+            <Input
+              id="firstname"
+              placeholder="John"
+              type="text"
+              autoComplete="given-name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              disabled={isLoading}
+            />
           </LabelInputContainer>
           <LabelInputContainer>
             <Label htmlFor="lastname">{t('last_name')}</Label>
-            <div className="relative">
-              <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="lastname"
-                placeholder="Doe"
-                type="text"
-                autoComplete="family-name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-                disabled={isLoading}
-                className="pl-9 h-11 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
-              />
-            </div>
+            <Input
+              id="lastname"
+              placeholder="Doe"
+              type="text"
+              autoComplete="family-name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+              disabled={isLoading}
+            />
           </LabelInputContainer>
         </div>
-
         <LabelInputContainer>
           <Label htmlFor="signup-email">{t('email')}</Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="signup-email"
-              placeholder="example@gmail.com"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-              className="pl-9 h-11 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
-            />
-          </div>
+          <Input
+            id="signup-email"
+            placeholder="example@gmail.com"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={isLoading}
+          />
         </LabelInputContainer>
-
         <LabelInputContainer>
           <Label htmlFor="signup-password">{t('password')}</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="signup-password"
-              placeholder="••••••••"
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-              className="pl-9 h-11 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
-            />
-          </div>
+          <Input
+            id="signup-password"
+            placeholder="••••••••"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={isLoading}
+          />
         </LabelInputContainer>
 
-        <Button
-          className="w-full h-11 text-base font-semibold shadow-md hover:shadow-lg transition-all mt-2"
-          type="submit"
-          disabled={isLoading}
-        >
+        <Button className="w-full h-10" type="submit" disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               {t('signing_up')}
             </>
           ) : (
-            <>
-              {t('signup')}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </>
+            <>{t('signup')} &rarr;</>
           )}
         </Button>
       </form>
@@ -126,5 +101,5 @@ export const SignUpForm = ({ onSubmit, isLoading }: SignUpFormProps) => {
 };
 
 const LabelInputContainer = ({ children, className }: { children: React.ReactNode; className?: string }) => {
-  return <div className={cn('flex w-full flex-col space-y-1', className)}>{children}</div>;
+  return <div className={cn('flex w-full flex-col space-y-2', className)}>{children}</div>;
 };

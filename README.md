@@ -1,89 +1,98 @@
 # AIDOC - AI-Powered Medical Diagnosis Assistant
 
-![AIDOC Logo](public/icon-512x512.webp)
+![AIDOC Logo](public/ai.webp)
 
-## Description
+## Overview
 
-AIDOC is a modern web application designed to assist users in understanding potential medical diagnoses based on entered symptoms. It leverages AI to provide educational information and insights into various health conditions.
-**Please note: AIDOC is for educational purposes only and is not a substitute for professional medical advice.**
+AIDOC is a state-of-the-art medical diagnosis assistant that leverages advanced Artificial Intelligence to help users understand their symptoms. By combining patient history, symptom details, and interactive 3D visualizations, AIDOC provides educational insights into potential health conditions.
 
-## Features
+**Disclaimer: AIDOC is for educational and informational purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.**
 
-- AI-powered symptom analysis and potential diagnosis generation.
-- Interactive 3D human anatomy models for visual understanding.
-- Dynamic and engaging background effects with Iridescence (light mode)
-- Responsive user interface designed for seamless experience across mobile and desktop devices.
+## Key Features
 
-## Technologies Used
+- **AI-Driven Diagnosis:** Utilizes Google Gemini via Genkit to analyze complex symptom patterns and patient history.
+- **Patient Profiles:** Manage multiple profiles (e.g., for family members) with unique medical histories, including chronic conditions and medications.
+- **Interactive 3D Anatomy:** Visualize symptom locations on high-quality 3D male and female models.
+- **Multi-Step Assessment:** A comprehensive questionnaire covering symptom type, location, severity, duration, onset, and triggers.
+- **Premium Features:** Support for photo analysis of symptoms, increased daily diagnosis limits, and expanded patient profiles.
+- **Multilingual Support:** Fully localized in English, Indonesian, Spanish, and French.
+- **PWA Ready:** Installable as a Progressive Web App for a native-like experience on mobile and desktop.
+- **Theme Support:** Beautifully designed Light and Dark modes featuring iridescent background effects.
 
-- **Frontend:** Next.js, React, TypeScript, Tailwind CSS, OGL (for 3D and shader effects), `next-themes` (for theme management)
-- **AI Integration:** Genkit (for AI flows)
+## Tech Stack
 
-## Installation & Local Development
+- **Framework:** [Next.js 15](https://nextjs.org/) (App Router)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **AI Integration:** [Genkit](https://github.com/firebase/genkit) with Google Gemini
+- **Backend/Auth:** [Firebase](https://firebase.google.com/) (Authentication, Firestore)
+- **3D Rendering:** [React Three Fiber](https://github.com/pmndrs/react-three-fiber), [Three.js](https://threejs.org/), and [OGL](https://github.com/o-o-o-o-o-o-o-o-o-o/ogl)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/), [Shadcn UI](https://ui.shadcn.com/), [Framer Motion](https://www.framer.com/motion/)
+- **Internationalization:** [i18next](https://www.i18next.com/)
+- **State Management:** [React Hook Form](https://react-hook-form.com/), [Zod](https://zod.dev/)
 
-Follow these steps to set up and run AIDOC on your local machine:
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- A Firebase project
+- A Google Gemini API key
+
+### Installation
 
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/your-username/AIDOC-AIDOC.git
-    cd AIDOC-AIDOC
+    git clone https://github.com/your-username/AIDOC.git
+    cd AIDOC
     ```
 
 2.  **Install dependencies:**
 
     ```bash
     npm install
-    # or yarn install
     ```
 
-3.  **Set up Environment Variables:**
+3.  **Environment Variables:**
+    Create a `.env.local` file and add your configuration:
 
-    Create a `.env.local` file in the root of the project directory and add your Genkit (or other AI service) API key:
-
+    ```env
+    NEXT_PUBLIC_FIREBASE_API_KEY=your_key
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_domain
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_id
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_bucket
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_id
+    NEXT_PUBLIC_FIREBASE_APP_ID=your_id
+    GOOGLE_GENAI_API_KEY=your_gemini_key
     ```
-    NEXT_PUBLIC_GENKIT_API_KEY=your_api_key_here
-    ```
-
-    (Replace `your_api_key_here` with your actual API key.)
 
 4.  **Run the development server:**
-
     ```bash
     npm run dev
-    # or yarn dev
     ```
+    Open [http://localhost:9002](http://localhost:9002) in your browser.
 
-5.  **Open in Browser:**
+## Development Scripts
 
-    Open your web browser and navigate to `http://localhost:9002`.
+- `npm run dev`: Starts the Next.js dev server.
+- `npm run genkit:dev`: Starts the Genkit UI for AI flow testing.
+- `npm run build`: Builds the production application.
+- `npm run test`: Runs the Jest test suite.
+- `npm run lint`: Checks for code quality issues.
 
-## Usage
+## Project Structure
 
-Once the application is running:
-
-1.  Navigate to the home page.
-2.  Enter your symptoms and any relevant medical history into the provided form.
-3.  Submit the form to receive potential diagnoses and educational information.
-4.  Toggle between light and dark modes using the theme switch in the header to experience different background effects.
-
-## Live Demo
-
-[https://studio--aidoc-ze7io.us-central1.hosted.app/]
+- `src/app`: Next.js App Router pages and API routes.
+- `src/components`: UI components, including `3d` models and assessment `forms`.
+- `src/ai`: Genkit flows and AI logic.
+- `src/lib`: Utility functions, Firebase config, and i18n setup.
+- `src/hooks`: Custom React hooks for form handling and UI state.
+- `public`: Static assets, including 3D models and localized icons.
 
 ## Contributing
 
-We welcome contributions! If you have suggestions for improvements, bug reports, or want to contribute code, please feel free to:
-
-- Open an issue to discuss your ideas or report bugs.
-- Fork the repository and submit a pull request with your changes.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgements
-
-- Built with Next.js and powered by Google Gemini.
-- Thanks to the developers of OGL for the beautiful shader effects.
-- Thanks to the open-source community for amazing tools and libraries.
