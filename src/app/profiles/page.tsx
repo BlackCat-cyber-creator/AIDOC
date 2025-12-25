@@ -57,6 +57,7 @@ export default function ProfilesPage() {
   const [isProfilesLoading, setIsProfilesLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [diagnosisCount, setDiagnosisCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Local state for form submission
   const { setIsLoading } = useLoading();
 
   useEffect(() => {
@@ -67,10 +68,12 @@ export default function ProfilesPage() {
     }
   }, [user, loading, router]);
 
-  const fetchUserDataAndProfiles = async () => {
+  const fetchUserDataAndProfiles = async (showGlobalLoading = true) => {
     if (!user) return;
     setIsProfilesLoading(true);
-    setIsLoading(true);
+    if (showGlobalLoading && profiles.length === 0) {
+      setIsLoading(true);
+    }
     try {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       const today = new Date().toISOString().split('T')[0];
@@ -111,7 +114,7 @@ export default function ProfilesPage() {
       return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
       if (selectedProfile?.docId) {
         const profileDoc = doc(db, 'users', user.uid, 'userProfile', selectedProfile.docId);
@@ -120,13 +123,17 @@ export default function ProfilesPage() {
         const profilesCollection = collection(db, 'users', user.uid, 'userProfile');
         await addDoc(profilesCollection, { ...values, id: user.uid });
       }
-      await fetchUserDataAndProfiles();
+
+      // Close form immediately for better UX
       setIsFormOpen(false);
+
+      // Refresh list in background
+      await fetchUserDataAndProfiles(false);
       setSelectedProfile(null);
     } catch (error) {
       console.error('Error saving profile: ', error);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -141,7 +148,7 @@ export default function ProfilesPage() {
     try {
       const profileDoc = doc(db, 'users', user.uid, 'userProfile', profileToDelete.docId);
       await deleteDoc(profileDoc);
-      await fetchUserDataAndProfiles();
+      await fetchUserDataAndProfiles(false);
       setIsDeleteDialogOpen(false);
       setProfileToDelete(null);
     } catch (error) {
@@ -249,7 +256,7 @@ export default function ProfilesPage() {
           </div>
         </div>
 
-        {isProfilesLoading || loading ? (
+        {isProfilesLoading && profiles.length === 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Card key={i} className="flex flex-col h-[280px] animate-pulse">
@@ -304,16 +311,12 @@ export default function ProfilesPage() {
                 open={isFormOpen}
                 onOpenChange={(open) => {
                   setIsFormOpen(open);
-                  if (open) {
-                    if (!isProfileFull) {
-                      setIsLoading(true);
-                    }
-                  } else {
-                    setIsLoading(false);
+                  if (!open) {
+                    setIsSubmitting(false);
+                    // No setIsLoading(false) here unless we actually started a global load
                   }
                 }}
               >
-                {/* Removed DialogTrigger button since it's now in the carousel */}
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
                     <DialogTitle>{selectedProfile ? t('edit_profile') : t('add_new_profile')}</DialogTitle>
@@ -324,6 +327,7 @@ export default function ProfilesPage() {
                       onSubmit={handleFormSubmit}
                       initialData={selectedProfile || undefined}
                       isPremium={isPremium}
+                      isLoading={isSubmitting}
                       submitButtonText={selectedProfile ? t('update_profile') : t('save_profile')}
                     />
                   </div>

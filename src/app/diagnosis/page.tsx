@@ -15,20 +15,20 @@ import { User, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { useLoading } from '@/components/LoadingProvider'; // Import useLoading
+import { useLoading } from '@/components/LoadingProvider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 const DiagnosisForm = dynamic(() => import('@/components/forms/DiagnosisForm').then((mod) => mod.DiagnosisForm), {
   ssr: false,
   loading: () => (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 p-4 animate-fade-in max-w-2xl mx-auto">
       <div className="mb-6 rounded-md border bg-muted/30 p-3 text-center">
         <Skeleton className="mx-auto mb-2 h-5 w-1/2" />
         <Skeleton className="h-2 w-full rounded-full bg-primary/20" />
       </div>
-      <Skeleton className="h-64 w-full rounded-lg" />
-      <div className="flex justify-between">
+      <Skeleton className="h-[400px] w-full rounded-lg" />
+      <div className="flex justify-between mt-8">
         <Skeleton className="h-10 w-24" />
         <Skeleton className="h-10 w-24" />
       </div>
@@ -41,7 +41,7 @@ const DiagnosisResult = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="mt-8 p-4">
+      <div className="mt-8 p-4 max-w-2xl mx-auto">
         <Skeleton className="mb-6 h-8 w-1/3" />
         <div className="space-y-6">
           <Skeleton className="h-32 w-full rounded-lg" />
@@ -55,22 +55,22 @@ const DiagnosisResult = dynamic(
 
 function ClientPageContent() {
   const [patientProfile, setPatientProfile] = useState<PatientProfile | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   const router = useRouter();
   const { t } = useTranslation();
-  const { setIsLoading } = useLoading(); // Get setIsLoading from context
+  const { setIsLoading } = useLoading();
 
   useEffect(() => {
     try {
       const profileData = sessionStorage.getItem('selectedPatientProfile');
       if (profileData) {
         setPatientProfile(JSON.parse(profileData));
-        setIsLoading(false); // Turn off loader once profile is loaded
-      } else {
-        setIsLoading(false); // Turn off loader if no profile selected
       }
     } catch (error) {
       console.error('Could not parse patient profile from session storage', error);
-      setIsLoading(false); // Turn off loader on error
+    } finally {
+      setIsInitializing(false);
+      setIsLoading(false); // Crucial: Stop the transition loader from the previous page
     }
   }, [setIsLoading]);
 
@@ -87,7 +87,6 @@ function ClientPageContent() {
     setCurrentStep,
   } = useDiagnosisForm(patientProfile);
 
-  // Scroll to top when viewMode changes to 'result'
   useEffect(() => {
     if (viewMode !== 'form') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -95,9 +94,21 @@ function ClientPageContent() {
   }, [viewMode]);
 
   const handleBackToProfiles = () => {
-    setIsLoading(true); // Set global loading to true
     router.push('/profiles');
   };
+
+  if (isInitializing) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <AppHeader />
+        <main className="container mx-auto flex-grow px-4 py-12">
+          <Skeleton className="h-24 w-full mb-8" />
+          <Skeleton className="h-64 w-full" />
+        </main>
+        <AppFooter />
+      </div>
+    );
+  }
 
   if (!patientProfile) {
     return (
@@ -111,7 +122,7 @@ function ClientPageContent() {
             <CardDescription>{t('profiles_desc')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={handleBackToProfiles} className="mt-4 inline-block">
+            <Button onClick={handleBackToProfiles} className="mt-4">
               {t('back_to_profiles')}
             </Button>
           </CardContent>

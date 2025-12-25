@@ -91,22 +91,15 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
 
     setIsUploading(true);
     try {
-      // 1. Compress image
       const options = {
         maxSizeMB: 0.5,
         maxWidthOrHeight: 1024,
         useWebWorker: true,
       };
       const compressedFile = await imageCompression(file, options);
-
-      // 2. Upload to Firebase Storage
       const storageRef = ref(storage, `users/${user.uid}/symptoms/${Date.now()}_${file.name}`);
       await uploadBytes(storageRef, compressedFile);
-
-      // 3. Get Download URL
       const downloadURL = await getDownloadURL(storageRef);
-
-      // 4. Update form
       form.setValue('symptoms.symptomImageUrl', downloadURL, { shouldValidate: true });
     } catch (error) {
       console.error('Upload error:', error);
@@ -136,6 +129,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
   }, [selectedLocations]);
 
   const handleNext = async () => {
+    // Only trigger validation for the fields in the CURRENT step
     const fieldsForStep: FieldPath<FormValues>[][] = [
       ['symptoms.location'],
       ['symptoms.type'],
@@ -148,7 +142,9 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
         'symptoms.symptomImageUrl',
       ],
     ];
-    const isValid = await form.trigger(fieldsForStep[currentStep]);
+
+    // Validate only current step fields before moving forward
+    const isValid = await form.trigger(fieldsForStep[currentStep], { shouldFocus: true });
     if (isValid) {
       setCurrentStep((prev) => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -132,7 +132,7 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[100dvh] items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
@@ -141,7 +141,7 @@ export default function LoginPage() {
   // If user is logged in but NOT verified, show verification screen
   if (user && !user.emailVerified) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-[100dvh] items-center justify-center p-4">
         <div className="max-w-md w-full bg-white dark:bg-black p-8 rounded-2xl shadow-input border border-neutral-200 dark:border-neutral-800 text-center">
           <h2 className="text-2xl font-bold mb-4">{t('verify_email_title')}</h2>
           <p className="text-neutral-600 dark:text-neutral-300 mb-6">

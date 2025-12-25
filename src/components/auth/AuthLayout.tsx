@@ -19,7 +19,7 @@ export const AuthLayout = ({ children, activeTab, setActiveTab, error }: AuthLay
   const { t } = useTranslation();
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-gray-50 dark:bg-neutral-950 relative">
+    <div className="flex min-h-[100dvh] w-full items-center justify-center p-4 bg-gray-50 dark:bg-neutral-950 relative">
       <LanguageSwitcher className="absolute top-4 right-4" />
 
       <div className="shadow-input mx-auto w-full max-w-md rounded-2xl bg-white p-6 md:p-8 dark:bg-black border border-neutral-200 dark:border-neutral-800">
