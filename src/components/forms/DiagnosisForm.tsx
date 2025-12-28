@@ -34,7 +34,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { useTranslation } from 'react-i18next';
 import imageCompression from 'browser-image-compression';
 import { MultiStepLoader } from '@/components/ui/multi-step-loader';
-import { sortedSimplifiedSymptomTypes, regionIds3D, symptomTypeToLocationMapping } from '@/lib/symptoms-data';
+import { symptomTypesByLanguage, regionIds3D, symptomTypeToLocationMapping } from '@/lib/symptoms-data';
 
 interface DiagnosisFormProps {
   form: UseFormReturn<FormValues>;
@@ -55,7 +55,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
   totalSteps,
   patientProfile,
 }: DiagnosisFormProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [user] = useAuthState(auth);
   const [isPremium, setIsPremium] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
@@ -109,12 +109,17 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
     }
   };
 
+  const currentSymptomTypes = React.useMemo(() => {
+    const lang = i18n.language?.split('-')[0] || 'en';
+    return symptomTypesByLanguage[lang] || symptomTypesByLanguage['en'];
+  }, [i18n.language]);
+
   const filteredSymptomTypesForDropdown = React.useMemo(() => {
     if (!selectedLocations || selectedLocations.length === 0) {
-      return sortedSimplifiedSymptomTypes;
+      return currentSymptomTypes;
     }
     const displayableSymptomTypeValues = new Set<string>();
-    sortedSimplifiedSymptomTypes.forEach((st) => {
+    currentSymptomTypes.forEach((st) => {
       const allowedRegions = symptomTypeToLocationMapping[st.value] || [];
       if (allowedRegions.length === 0) {
         displayableSymptomTypeValues.add(st.value);
@@ -125,8 +130,8 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
         displayableSymptomTypeValues.add(st.value);
       }
     });
-    return sortedSimplifiedSymptomTypes.filter((st) => displayableSymptomTypeValues.has(st.value));
-  }, [selectedLocations]);
+    return currentSymptomTypes.filter((st) => displayableSymptomTypeValues.has(st.value));
+  }, [selectedLocations, currentSymptomTypes]);
 
   const handleNext = async () => {
     // Only trigger validation for the fields in the CURRENT step
@@ -287,7 +292,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                             {field.value?.length ? (
                               field.value.map((val) => (
                                 <Badge variant="secondary" key={val} className="flex items-center gap-1">
-                                  {sortedSimplifiedSymptomTypes.find((s) => s.value === val)?.label || val}
+                                  {currentSymptomTypes.find((s) => s.value === val)?.label || val}
                                   <XIcon
                                     className="h-3 w-3 cursor-pointer"
                                     onClick={(e) => {

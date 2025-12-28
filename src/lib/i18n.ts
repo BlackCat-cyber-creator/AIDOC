@@ -166,6 +166,9 @@ i18n
           premium_feature_4: 'Symptom location map',
           premium_feature_5: 'Symptom photo analysis',
           premium_feature_6: 'Advanced AI analysis',
+          disclaimer_title: 'Disclaimer:',
+          disclaimer_text:
+            'AIDOC © {{year}}. This tool provides information for educational purposes only and is not a substitute for professional medical diagnosis.',
         },
       },
       id: {
@@ -322,6 +325,9 @@ i18n
           premium_feature_4: 'Peta lokasi gejala',
           premium_feature_5: 'Analisis foto gejala',
           premium_feature_6: 'Analisis AI tingkat lanjut',
+          disclaimer_title: 'Penafian:',
+          disclaimer_text:
+            'AIDOC © {{year}}. Alat ini menyediakan informasi hanya untuk tujuan pendidikan dan bukan pengganti diagnosis medis profesional.',
         },
       },
       es: {
@@ -478,6 +484,9 @@ i18n
           premium_feature_4: 'Mapa de ubicación de síntomas',
           premium_feature_5: 'Análisis de fotos de síntomas',
           premium_feature_6: 'Análisis avanzado de IA',
+          disclaimer_title: 'Descargo de responsabilidad:',
+          disclaimer_text:
+            'AIDOC © {{year}}. Esta herramienta proporciona información solo con fines educativos y no sustituye el diagnóstico médico profesional.',
         },
       },
       fr: {
@@ -635,6 +644,9 @@ i18n
           premium_feature_4: 'Carte de localisation des symptômes',
           premium_feature_5: 'Analyse photo des symptômes',
           premium_feature_6: 'Analyse IA avancée',
+          disclaimer_title: 'Avertissement :',
+          disclaimer_text:
+            'AIDOC © {{year}}. Cet outil fournit des informations à des fins éducatives uniquement et ne remplace pas un diagnostic médical professionnel.',
         },
       },
     },

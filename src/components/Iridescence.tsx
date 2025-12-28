@@ -1,5 +1,5 @@
-import { Renderer, Program, Mesh, Color, Triangle } from "ogl";
-import { useEffect, useRef } from "react";
+import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
+import { useEffect, useRef } from 'react';
 
 const vertexShader = `
 attribute vec2 uv;
@@ -47,6 +47,14 @@ void main() {
 }
 `;
 
+interface IridescenceProps extends React.HTMLAttributes<HTMLDivElement> {
+  color?: [number, number, number];
+  speed?: number;
+  amplitude?: number;
+  mouseReact?: boolean;
+  horizontalStretch?: number;
+}
+
 export default function Iridescence({
   color = [1, 1, 1],
   speed = 1.0,
@@ -54,7 +62,7 @@ export default function Iridescence({
   mouseReact = true,
   horizontalStretch = 1.0,
   ...rest
-}) {
+}: IridescenceProps) {
   const ctnDom = useRef<HTMLDivElement>(null);
   const mousePos = useRef({ x: 0.5, y: 0.5 });
 
@@ -65,9 +73,7 @@ export default function Iridescence({
     const gl = renderer.gl;
     gl.clearColor(1, 1, 1, 1);
 
-    let program: Program;
-
-    function resize() {
+    const resize = () => {
       const scale = 1;
       renderer.setSize(ctn.offsetWidth * scale, ctn.offsetHeight * scale);
       if (program) {
@@ -77,23 +83,17 @@ export default function Iridescence({
           gl.canvas.width / gl.canvas.height
         );
       }
-    }
-    window.addEventListener("resize", resize, false);
-    resize();
+    };
 
     const geometry = new Triangle(gl);
-    program = new Program(gl, {
+    const program = new Program(gl, {
       vertex: vertexShader,
       fragment: fragmentShader,
       uniforms: {
         uTime: { value: 0 },
         uColor: { value: new Color(...color) },
         uResolution: {
-          value: new Color(
-            gl.canvas.width,
-            gl.canvas.height,
-            gl.canvas.width / gl.canvas.height
-          ),
+          value: new Color(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height),
         },
         uMouse: { value: new Float32Array([mousePos.current.x, mousePos.current.y]) },
         uAmplitude: { value: amplitude },
@@ -102,46 +102,44 @@ export default function Iridescence({
       },
     });
 
+    window.addEventListener('resize', resize, false);
+    resize();
+
     const mesh = new Mesh(gl, { geometry, program });
     let animateId: number;
 
-    function update(t: DOMHighResTimeStamp) {
+    const update = (t: DOMHighResTimeStamp) => {
       animateId = requestAnimationFrame(update);
       program.uniforms.uTime.value = t * 0.001;
       renderer.render({ scene: mesh });
-    }
+    };
     animateId = requestAnimationFrame(update);
     ctn.appendChild(gl.canvas);
 
-    function handleMouseMove(e: MouseEvent) {
+    const handleMouseMove = (e: MouseEvent) => {
       const rect = ctn.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = 1.0 - (e.clientY - rect.top) / rect.height;
       mousePos.current = { x, y };
       program.uniforms.uMouse.value[0] = x;
       program.uniforms.uMouse.value[1] = y;
-    }
+    };
     if (mouseReact) {
-      ctn.addEventListener("mousemove", handleMouseMove);
+      ctn.addEventListener('mousemove', handleMouseMove);
     }
 
     return () => {
       cancelAnimationFrame(animateId);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener('resize', resize);
       if (mouseReact) {
-        ctn.removeEventListener("mousemove", handleMouseMove);
+        ctn.removeEventListener('mousemove', handleMouseMove);
       }
-      ctn.removeChild(gl.canvas);
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      if (ctn.contains(gl.canvas)) {
+        ctn.removeChild(gl.canvas);
+      }
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [color, speed, amplitude, mouseReact, horizontalStretch]);
 
-  return (
-    <div
-      ref={ctnDom}
-      className="w-full h-full"
-      {...rest}
-    />
-  );
-} 
+  return <div ref={ctnDom} className="w-full h-full" {...rest} />;
+}
