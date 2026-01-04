@@ -14,11 +14,13 @@ import {
 import { doc, setDoc } from 'firebase/firestore';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { SignUpForm } from '@/components/auth/SignUpForm';
-import { AuthLayout } from '@/components/auth/AuthLayout';
 import { VerifyEmailState } from '@/components/auth/VerifyEmailState';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles, Activity } from 'lucide-react';
 import { useLoading } from '@/components/LoadingProvider';
 import { useTranslation } from 'react-i18next';
+import Iridescence from '@/components/Iridescence';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,7 +36,6 @@ export default function LoginPage() {
     setMounted(true);
   }, []);
 
-  // Helper function to map Firebase error codes to translated strings
   const getErrorMessage = (errorCode: string) => {
     switch (errorCode) {
       case 'auth/invalid-credential':
@@ -56,7 +57,6 @@ export default function LoginPage() {
     }
   };
 
-  // If the user is already logged in and verified, send them to profiles automatically
   useEffect(() => {
     if (user && !loading) {
       if (user.emailVerified) {
@@ -66,7 +66,6 @@ export default function LoginPage() {
         setIsLoading(false);
       }
     }
-    // If not loading and no user, make sure global loading is off
     if (!loading && !user) {
       setGlobalLoading(false);
     }
@@ -136,13 +135,12 @@ export default function LoginPage() {
 
   if (!mounted || loading) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
 
-  // If user is logged in but NOT verified, show verification screen
   if (user && !user.emailVerified) {
     return (
       <VerifyEmailState
@@ -154,15 +152,76 @@ export default function LoginPage() {
     );
   }
 
-  if (user && user.emailVerified) return null; // Prevent flicker before redirect
+  if (user && user.emailVerified) return null;
 
   return (
-    <AuthLayout activeTab={activeTab} setActiveTab={setActiveTab} error={error}>
-      {activeTab === 'login' ? (
-        <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
-      ) : (
-        <SignUpForm onSubmit={handleSignup} isLoading={isLoading} />
-      )}
-    </AuthLayout>
+    <div className="min-h-screen w-full flex relative bg-background">
+      {/* Fixed Background - ensures it never cuts off */}
+      <div className="fixed inset-0 z-0 opacity-40 pointer-events-none">
+        <Iridescence color={[0.8, 0.9, 1]} mouseReact={true} amplitude={0.1} speed={0.3} />
+      </div>
+
+      {/* Left Side - Hero / Branding (Hidden on mobile) */}
+      <div className="hidden lg:flex w-1/2 relative z-10 flex-col justify-center items-center p-12 text-center h-screen sticky top-0">
+        <div className="relative w-48 h-48 mb-8 animate-in zoom-in duration-700">
+          <img src="/models/app_icon.glb" alt="" className="hidden" />
+          <img src="/icon-512x512.png" alt="AIDOC" className="w-full h-full object-contain drop-shadow-2xl" />
+        </div>
+        <h1 className="text-6xl font-black tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+          AIDOC
+        </h1>
+        <p className="text-xl text-muted-foreground max-w-md leading-relaxed">
+          Your intelligent medical companion. <br />
+          <span className="font-semibold text-foreground">Diagnosis. History. Care.</span>
+        </p>
+      </div>
+
+      {/* Right Side - Form (Scrollable container) */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 relative z-10 min-h-screen">
+        <Card className="w-full max-w-md shadow-2xl border-white/20 bg-white/80 backdrop-blur-xl dark:bg-black/40 my-auto">
+          <CardHeader className="text-center pb-2">
+            <div className="lg:hidden w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-2xl flex items-center justify-center">
+              <Activity className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-bold">{t('welcome_back', 'Welcome Back')}</CardTitle>
+            <CardDescription>{t('login_subtitle', 'Enter your details to access your account')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6 h-12 rounded-xl bg-muted/50 p-1">
+                <TabsTrigger
+                  value="login"
+                  className="rounded-lg text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm"
+                >
+                  {t('login')}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="signup"
+                  className="rounded-lg text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm"
+                >
+                  {t('signup')}
+                </TabsTrigger>
+              </TabsList>
+
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {error && (
+                  <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" /> {error}
+                  </div>
+                )}
+
+                <TabsContent value="login" className="mt-0 space-y-4">
+                  <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+                </TabsContent>
+
+                <TabsContent value="signup" className="mt-0 space-y-4">
+                  <SignUpForm onSubmit={handleSignup} isLoading={isLoading} />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

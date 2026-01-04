@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { collection, getDocs, doc, setDoc, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { PatientProfile } from '@/lib/schema';
 import { PatientProfileForm } from '@/components/forms/PatientProfileForm';
 import { Button } from '@/components/ui/button';
@@ -31,8 +31,9 @@ import Carousel from '@/components/ui/carousel';
 import { useUser } from '@/components/UserProvider';
 import { PatientHistoryList } from '@/components/history/PatientHistoryList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useFirestore } from '@/hooks/db/useFirestore';
 
-type ProfileWithDocId = PatientProfile & { docId: string };
+type ProfileWithDocId = PatientProfile & { id: string; docId?: string }; // Normalized ID type
 
 const FREE_PROFILE_LIMIT = 2;
 const PRO_PROFILE_LIMIT = 5;
@@ -40,55 +41,57 @@ const FREE_DAILY_LIMIT = 4;
 const PRO_DAILY_LIMIT = 25;
 
 export default function ProfilesPage() {
-  const [user, loading] = useAuthState(auth);
+  const [user, authLoading] = useAuthState(auth);
   const { settings } = useUser();
   const router = useRouter();
   const { t } = useTranslation();
-  const [profiles, setProfiles] = useState<ProfileWithDocId[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  // Use new generic hook for cleaner data fetching
+  const {
+    data: profiles,
+    loading: isProfilesLoading,
+    add: addProfile,
+    update: updateProfile,
+    remove: removeProfile,
+    refresh: refreshProfiles,
+  } = useFirestore<ProfileWithDocId>('userProfile');
+
   const [selectedProfile, setSelectedProfile] = useState<ProfileWithDocId | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<ProfileWithDocId | null>(null);
-  const [isProfilesLoading, setIsProfilesLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { setIsLoading } = useLoading();
 
   const isPremium = settings.isPremium;
   const diagnosisCount = settings.diagnosisCount;
 
+  // Hydration fix: Ensure component is mounted before rendering auth-dependent content
   useEffect(() => {
-    if (!loading && !user) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    if (!authLoading && !user) {
       router.push('/');
     } else if (user) {
-      fetchProfiles();
       checkDailyReset();
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router, mounted]);
 
   const checkDailyReset = async () => {
     if (!user) return;
     const today = new Date().toISOString().split('T')[0];
     if (settings.lastDiagnosisDate !== today) {
-      await updateDoc(doc(db, 'users', user.uid), { diagnosisCount: 0, lastDiagnosisDate: today });
-    }
-  };
-
-  const fetchProfiles = async () => {
-    if (!user) return;
-    setIsProfilesLoading(true);
-    try {
-      const profilesCollection = collection(db, 'users', user.uid, 'userProfile');
-      const profilesSnapshot = await getDocs(profilesCollection);
-      const profilesData = profilesSnapshot.docs.map((doc) => ({
-        ...doc.data(),
-        docId: doc.id,
-      })) as ProfileWithDocId[];
-      setProfiles(profilesData);
-    } catch (error) {
-      console.error('Error fetching data: ', error);
-    } finally {
-      setIsProfilesLoading(false);
-      setIsLoading(false);
+      // We use a try-catch to safely ignore if this fires on unmount or race condition
+      try {
+        await updateDoc(doc(db, 'users', user.uid), { diagnosisCount: 0, lastDiagnosisDate: today });
+      } catch (e) {
+        console.error('Daily reset update failed silently', e);
+      }
     }
   };
 
@@ -103,16 +106,13 @@ export default function ProfilesPage() {
 
     setIsSubmitting(true);
     try {
-      if (selectedProfile?.docId) {
-        const profileDoc = doc(db, 'users', user.uid, 'userProfile', selectedProfile.docId);
-        await setDoc(profileDoc, { ...values, id: user.uid }, { merge: true });
+      if (selectedProfile?.id) {
+        await updateProfile(selectedProfile.id, values);
       } else {
-        const profilesCollection = collection(db, 'users', user.uid, 'userProfile');
-        await addDoc(profilesCollection, { ...values, id: user.uid });
+        await addProfile(values as any);
       }
 
       setIsFormOpen(false);
-      await fetchProfiles();
       setSelectedProfile(null);
     } catch (error) {
       console.error('Error saving profile: ', error);
@@ -130,9 +130,7 @@ export default function ProfilesPage() {
     if (!user || !profileToDelete) return;
     setIsLoading(true);
     try {
-      const profileDoc = doc(db, 'users', user.uid, 'userProfile', profileToDelete.docId);
-      await deleteDoc(profileDoc);
-      await fetchProfiles();
+      await removeProfile(profileToDelete.id);
       setIsDeleteDialogOpen(false);
       setProfileToDelete(null);
     } catch (error) {
@@ -144,9 +142,9 @@ export default function ProfilesPage() {
 
   const handleStartDiagnosis = (profile: ProfileWithDocId) => {
     setIsLoading(true);
-    const { profile_picture, ...profileData } = profile;
-    sessionStorage.setItem('selectedPatientProfile', JSON.stringify(profileData));
-    router.push('/diagnosis');
+    const profileToSave = { ...profile, docId: profile.id };
+    sessionStorage.setItem('selectedPatientProfile', JSON.stringify(profileToSave));
+    window.location.assign('/diagnosis');
   };
 
   const currentProfileLimit = isPremium ? PRO_PROFILE_LIMIT : FREE_PROFILE_LIMIT;
@@ -184,6 +182,15 @@ export default function ProfilesPage() {
       setIsFormOpen(true);
     }
   };
+
+  // Prevent hydration mismatch by rendering a loader or nothing until mounted
+  if (!mounted) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Skeleton className="h-12 w-12 rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden">
@@ -238,16 +245,16 @@ export default function ProfilesPage() {
         </div>
 
         <Tabs defaultValue="profiles" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8 max-w-md mx-auto">
-            <TabsTrigger value="profiles" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-2 mb-8 max-w-md mx-auto h-12">
+            <TabsTrigger value="profiles" className="flex items-center gap-2 h-10">
               <User className="h-4 w-4" /> {t('profiles', 'Profiles')}
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
+            <TabsTrigger value="history" className="flex items-center gap-2 h-10">
               <History className="h-4 w-4" /> {t('history', 'History')}
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="profiles" className="space-y-4">
+          <TabsContent value="profiles" className="space-y-4 animate-fade-in">
             {isProfilesLoading && profiles.length === 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -294,7 +301,7 @@ export default function ProfilesPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="history">
+          <TabsContent value="history" className="animate-fade-in">
             <div className="max-w-2xl mx-auto">
               <PatientHistoryList />
             </div>

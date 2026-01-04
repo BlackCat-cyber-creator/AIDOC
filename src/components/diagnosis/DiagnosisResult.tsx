@@ -15,6 +15,10 @@ interface DiagnosisResultProps {
 }
 
 export function DiagnosisResult({ result, onStartNewDiagnosis, isSubmitting, error }: DiagnosisResultProps) {
+  // If we are submitting, we show the DiagnosisList in loading mode (skeleton)
+  // OR we rely on the MultiStepLoader which overlays the screen.
+  // Given we have a full screen loader, we can just return null or a skeleton here.
+  // But let's keep the skeleton for a smoother transition if the overlay fades out early.
   if (isSubmitting) {
     return <DiagnosisList diagnoses={null} isLoading={true} />;
   }
@@ -40,6 +44,7 @@ export function DiagnosisResult({ result, onStartNewDiagnosis, isSubmitting, err
         <RotateCcw className="mr-2 h-4 w-4" />
         Start New Diagnosis
       </Button>
+      {/* We pass isLoading=false because isSubmitting is already handled above */}
       <DiagnosisList diagnoses={result?.diagnoses ?? null} isLoading={false} />
     </>
   );
