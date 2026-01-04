@@ -9,9 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 import { transformFormDataForAI } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, increment, setDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useTranslation } from 'react-i18next';
+import { useUser } from '@/components/UserProvider';
 
 export type ViewMode = 'form' | 'results';
 
@@ -32,7 +33,6 @@ const TOTAL_FORM_STEPS = 3;
 const FREE_DAILY_LIMIT = 6;
 const PRO_DAILY_LIMIT = 50;
 
-// This function will now be called by the form hook to communicate with our new API route
 async function generateDiagnosesFromApi(input: GenerateDiagnosesInput): Promise<GenerateDiagnosesOutput> {
   const response = await fetch('/api/diagnose', {
     method: 'POST',
@@ -56,23 +56,9 @@ export function useDiagnosisForm(patientProfile: PatientProfile | null): Diagnos
   const [currentStep, setCurrentStep] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>('form');
   const [user] = useAuthState(auth);
-  const [isPremium, setIsPremium] = useState(false);
+  const { settings } = useUser();
 
-  useEffect(() => {
-    async function checkSubscription() {
-      if (user) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            setIsPremium(userDoc.data().isPremium || false);
-          }
-        } catch (error) {
-          console.error('Error fetching premium status:', error);
-        }
-      }
-    }
-    checkSubscription();
-  }, [user]);
+  const isPremium = settings.isPremium;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema.omit({ profile: true })),
@@ -106,28 +92,41 @@ export function useDiagnosisForm(patientProfile: PatientProfile | null): Diagnos
     Error,
     GenerateDiagnosesInput
   >({
-    mutationFn: generateDiagnosesFromApi, // Use the new API calling function
-    onSuccess: async (result) => {
-      if (result && result.diagnoses) {
-        // Increment usage count on success
-        if (user) {
+    mutationFn: generateDiagnosesFromApi,
+    onSuccess: async (result, variables) => {
+      if (result && result.diagnoses && user && patientProfile) {
+        try {
+          // 1. Save to History (Patient History Feature)
+          const historyCollection = collection(db, 'users', user.uid, 'diagnoses');
+          await addDoc(historyCollection, {
+            patientProfileId: patientProfile.id,
+            patientName: patientProfile.name,
+            input: variables,
+            output: result,
+            createdAt: serverTimestamp(),
+          });
+
+          // 2. Update usage count
           const today = new Date().toISOString().split('T')[0];
           const userRef = doc(db, 'users', user.uid);
           await updateDoc(userRef, {
             diagnosisCount: increment(1),
             lastDiagnosisDate: today,
           }).catch(async (err) => {
-            // If the document doesn't exist or field is missing, set it
             await setDoc(userRef, { diagnosisCount: 1, lastDiagnosisDate: today }, { merge: true });
           });
-        }
 
-        setViewMode('results');
-        toast({
-          title: 'Diagnosis Generated',
-          description: 'Potential diagnoses have been successfully generated.',
-        });
-      } else {
+          setViewMode('results');
+          toast({
+            title: 'Diagnosis Generated',
+            description: 'Potential diagnoses have been successfully generated and saved to history.',
+          });
+        } catch (dbError) {
+          console.error('Error saving history:', dbError);
+          // Still show results even if saving history fails, but warn the user
+          setViewMode('results');
+        }
+      } else if (!result || !result.diagnoses) {
         const errorMessage = 'Received an empty or invalid response from the AI. Please try again.';
         setViewMode('form');
         toast({
@@ -155,21 +154,10 @@ export function useDiagnosisForm(patientProfile: PatientProfile | null): Diagnos
     }
     if (!user) return;
 
-    // Check Daily Limit
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    const userData = userDoc.data();
     const today = new Date().toISOString().split('T')[0];
-    const lastDate = userData?.lastDiagnosisDate;
-    let count = userData?.diagnosisCount || 0;
-
-    if (lastDate !== today) {
-      count = 0; // Reset count for a new day
-      await updateDoc(doc(db, 'users', user.uid), { diagnosisCount: 0, lastDiagnosisDate: today });
-    }
-
     const dailyLimit = isPremium ? PRO_DAILY_LIMIT : FREE_DAILY_LIMIT;
 
-    if (count >= dailyLimit) {
+    if (settings.lastDiagnosisDate === today && settings.diagnosisCount >= dailyLimit) {
       toast({
         variant: 'destructive',
         title: 'Daily Limit Reached',
@@ -184,7 +172,6 @@ export function useDiagnosisForm(patientProfile: PatientProfile | null): Diagnos
       ...values,
       profile: patientProfile,
     };
-    // Pass current language to the AI
     const inputForAI = transformFormDataForAI(fullData, isPremium, i18n.language);
     mutation.mutate(inputForAI);
   };

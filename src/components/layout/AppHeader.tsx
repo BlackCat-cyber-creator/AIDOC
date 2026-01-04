@@ -17,15 +17,15 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
 import { useLoading } from '@/components/LoadingProvider';
+import { useUser } from '@/components/UserProvider';
 
 const languages = [
   { code: 'en', name: 'English' },
@@ -37,28 +37,18 @@ const languages = [
 export function AppHeader() {
   const isMobile = useIsMobile();
   const [user] = useAuthState(auth);
+  const { settings } = useUser();
   const router = useRouter();
   const pathname = usePathname();
   const { i18n, t } = useTranslation();
-  const [isPremium, setIsPremium] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { setIsLoading } = useLoading();
+
+  const isPremium = settings.isPremium;
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    async function checkSubscription() {
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setIsPremium(userDoc.data().isPremium || false);
-        }
-      }
-    }
-    checkSubscription();
-  }, [user]);
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -72,9 +62,6 @@ export function AppHeader() {
 
   const handleNavigation = (path: string) => {
     if (pathname !== path) {
-      // router.push already handles navigation, we'll let the target page handle the loader if needed
-      // or we can keep it here but ensure target page clears it.
-      // Given the "forever" issue, let's remove it and see.
       router.push(path);
     }
   };
@@ -86,6 +73,9 @@ export function AppHeader() {
       <header className="py-0 mb-6 border-b border-border relative h-21 sm:h-25 md:h-29 lg:h-33 bg-muted/10"></header>
     );
   }
+
+  const iconScale = isMobile === false ? 0.8 : 0.5;
+  const iconPosition: [number, number, number] = isMobile === false ? [0, -0.7, 0] : [0, -0.5, 0];
 
   return (
     <header className="py-0 mb-6 border-b border-border relative h-21 sm:h-25 md:h-29 lg:h-33">
@@ -100,8 +90,8 @@ export function AppHeader() {
           <AppIcon3D
             key={isMobile ? 'mobile-app-icon' : 'desktop-app-icon'}
             modelPath="/models/app_icon.glb"
-            scale={isMobile ? 0.5 : 0.8}
-            position={isMobile ? [0, -0.5, 0] : [0, -0.7, 0]}
+            scale={iconScale}
+            position={iconPosition}
             rotation={[-Math.PI / 16, Math.PI / 16, 0]}
           />
         </div>

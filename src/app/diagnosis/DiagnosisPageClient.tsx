@@ -13,7 +13,6 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { User, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useLoading } from '@/components/LoadingProvider';
 
@@ -70,7 +69,7 @@ function ClientPageContent() {
       console.error('Could not parse patient profile from session storage', error);
     } finally {
       setIsInitializing(false);
-      setIsLoading(false); // Crucial: Stop the transition loader from the previous page
+      setIsLoading(false);
     }
   }, [setIsLoading]);
 
@@ -94,7 +93,9 @@ function ClientPageContent() {
   }, [viewMode]);
 
   const handleBackToProfiles = () => {
-    router.push('/profiles');
+    setIsLoading(true);
+    // Use window.location.assign for a hard redirect to bypass potential WebView navigation lock
+    window.location.assign('/profiles');
   };
 
   if (isInitializing) {
@@ -136,21 +137,21 @@ function ClientPageContent() {
       <AppHeader />
       <main className="container mx-auto w-full flex-grow px-4 pb-12 sm:px-6 lg:px-8">
         <Card className="mb-8 border-primary/20 bg-primary/5">
-          <CardHeader className="flex flex-row items-center justify-between gap-4 py-4">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
             <div className="flex items-center gap-4">
-              <div className="rounded-full bg-primary/10 p-2">
+              <div className="rounded-full bg-primary/10 p-2 shrink-0">
                 <User className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-xl capitalize">
+                <CardTitle className="text-lg sm:text-xl capitalize line-clamp-1">
                   {t('start_diagnosis')}: {patientProfile.name}
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs sm:text-sm">
                   {t(patientProfile.age)} • {t(patientProfile.sex)}
                 </CardDescription>
               </div>
             </div>
-            <Button variant="ghost" onClick={handleBackToProfiles} className="gap-2">
+            <Button variant="outline" onClick={handleBackToProfiles} className="gap-2 w-full sm:w-auto h-9 text-xs">
               <ArrowLeft className="h-4 w-4" />
               {t('back_to_profiles')}
             </Button>

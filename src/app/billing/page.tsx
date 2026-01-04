@@ -8,10 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Check, Crown, Loader2, Play } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { doc, onSnapshot } from 'firebase/firestore'; // Changed getDoc to onSnapshot for real-time updates
+import { doc, onSnapshot } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { useLoading } from '@/components/LoadingProvider';
+
+// Pastikan ID ini sama dengan yang ada di Google Play Console dan MainActivity.kt
+const PREMIUM_PRODUCT_ID = 'premium_monthly';
 
 export default function BillingPage() {
   const [user, loading] = useAuthState(auth);
@@ -22,11 +25,8 @@ export default function BillingPage() {
   const [isAndroid, setIsAndroid] = useState(false);
 
   useEffect(() => {
-    // Check if running in Android environment
     setIsAndroid(typeof window !== 'undefined' && !!window.AndroidBilling);
 
-    // Real-time listener for user subscription status
-    // This allows the UI to update immediately when BillingListener updates the database
     let unsubscribe = () => {};
 
     if (user) {
@@ -37,7 +37,6 @@ export default function BillingPage() {
           if (doc.exists()) {
             const data = doc.data();
             setIsPremium(data.isPremium || false);
-            // If we were processing and now we are premium, stop processing
             if (data.isPremium && isProcessing) {
               setIsProcessing(false);
             }
@@ -59,19 +58,22 @@ export default function BillingPage() {
   const handleUpgrade = async () => {
     if (!user) return;
 
-    // Check if we are inside the Android App (via Javascript Interface)
     if (window.AndroidBilling) {
       setIsProcessing(true);
       try {
-        // This calls the @JavascriptInterface in MainActivity.kt
-        window.AndroidBilling.upgradeToPremium();
+        // Coba metode baru dengan ID Produk dinamis
+        if (window.AndroidBilling.launchPurchaseFlow) {
+          window.AndroidBilling.launchPurchaseFlow(PREMIUM_PRODUCT_ID);
+        } else {
+          // Fallback ke metode lama jika app belum diupdate
+          window.AndroidBilling.upgradeToPremium();
+        }
       } catch (e) {
         console.error('Native call failed', e);
         setIsProcessing(false);
         alert(t('error_native_connect'));
       }
     } else {
-      // Fallback for web users
       alert(t('error_android_only'));
     }
   };
@@ -174,13 +176,10 @@ export default function BillingPage() {
         </div>
         {!isAndroid && (
           <div className="mt-8 text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200 text-yellow-800 max-w-2xl mx-auto">
-            <p className="font-semibold">{t('mobile_app_only') || 'Subscription available in Mobile App only'}</p>
-            <p className="text-sm mt-1">{t('download_app_hint') || 'Please download our Android app to subscribe.'}</p>
+            <p className="font-semibold">{t('mobile_app_only')}</p>
+            <p className="text-sm mt-1">{t('download_app_hint')}</p>
           </div>
         )}
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>{t('payment_notice')}</p>
-        </div>
       </main>
       <AppFooter />
     </div>

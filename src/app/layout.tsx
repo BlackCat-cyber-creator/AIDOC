@@ -6,6 +6,7 @@ import { Inter } from 'next/font/google';
 import { I18nProvider } from '@/components/I18nProvider';
 import { LoadingProvider } from '@/components/LoadingProvider';
 import { BillingListener } from '@/components/BillingListener';
+import { UserProvider } from '@/components/UserProvider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
@@ -39,8 +40,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeProvider attribute="class" defaultTheme="light" forceTheme="light" disableTransitionOnChange>
           <I18nProvider>
             <LoadingProvider>
-              <BillingListener />
-              {children}
+              <UserProvider>
+                <BillingListener />
+                {children}
+              </UserProvider>
             </LoadingProvider>
             <Toaster />
           </I18nProvider>

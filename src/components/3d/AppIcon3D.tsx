@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useRef, useEffect } from 'react';
+import React, { Suspense, useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, OrbitControls } from '@react-three/drei';
 import { Box3, Vector3, AnimationMixer, PerspectiveCamera } from 'three';
@@ -78,8 +78,32 @@ export function AppIcon3D({
   rotation = [0, 0, 0],
   animate = true,
 }: AppIcon3DProps) {
+  // Use a state to force re-render when dimensions change, with a default for Android (mobile)
+  const [dimensions, setDimensions] = useState({ width: '16rem', height: '16rem' }); // Default to w-64 h-64 (Android size)
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (window.innerWidth >= 1024) {
+        // lg
+        setDimensions({ width: '15rem', height: '15rem' }); // lg:w-60 lg:h-60
+      } else if (window.innerWidth >= 768) {
+        // md
+        setDimensions({ width: '12rem', height: '12rem' }); // md:w-48 md:h-48
+      } else if (window.innerWidth >= 640) {
+        // sm
+        setDimensions({ width: '11rem', height: '11rem' }); // sm:w-44 sm:h-44
+      } else {
+        setDimensions({ width: '16rem', height: '16rem' }); // Default w-64 h-64
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
   return (
-    <div className="w-64 h-64 sm:w-44 sm:h-44 md:w-48 md:h-48 lg:w-60 lg:h-60 flex items-center justify-center">
+    <div style={{ width: dimensions.width, height: dimensions.height }} className="flex items-center justify-center">
       <Canvas camera={{ fov: 75 }}>
         <ambientLight intensity={0.8} />
         <directionalLight position={[0, 0, 5]} intensity={1} />

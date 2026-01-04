@@ -19,7 +19,18 @@ import { Slider } from '@/components/ui/slider';
 import type { FormValues, PatientProfile } from '@/lib/schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Check, X as XIcon, MapPin, ListChecks, ClipboardList, Camera, Crown, Upload } from 'lucide-react';
+import {
+  Loader2,
+  Check,
+  X as XIcon,
+  MapPin,
+  ListChecks,
+  ClipboardList,
+  Camera,
+  Crown,
+  Upload,
+  ArrowLeft,
+} from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -27,15 +38,15 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { HumanAnatomy3D } from '@/components/3d/HumanAnatomy3D';
-import { auth, db, storage } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { auth, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useTranslation } from 'react-i18next';
 import imageCompression from 'browser-image-compression';
 import { MultiStepLoader } from '@/components/ui/multi-step-loader';
-import { symptomTypesByLanguage, regionIds3D, symptomTypeToLocationMapping } from '@/lib/symptoms-data';
-import { useRouter } from 'next/navigation';
+import { symptomTypesByLanguage, symptomTypeToLocationMapping } from '@/lib/symptoms-data';
+import { useUser } from '@/components/UserProvider';
+import { useLoading } from '@/components/LoadingProvider';
 
 interface DiagnosisFormProps {
   form: UseFormReturn<FormValues>;
@@ -57,12 +68,14 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
   patientProfile,
 }: DiagnosisFormProps) {
   const { t, i18n } = useTranslation();
-  const router = useRouter();
   const [user] = useAuthState(auth);
-  const [isPremium, setIsPremium] = React.useState(false);
+  const { settings } = useUser();
+  const { setIsLoading } = useLoading();
   const [isUploading, setIsUploading] = React.useState(false);
   const [symptomTypePopoverOpen, setSymptomTypePopoverOpen] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const isPremium = settings.isPremium;
 
   const stepTitles = [t('symptom_location'), t('symptom_type'), t('symptom_details')];
   const stepIcons: Record<number, React.ElementType> = {
@@ -70,18 +83,6 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
     1: ListChecks,
     2: ClipboardList,
   };
-
-  React.useEffect(() => {
-    async function checkSubscription() {
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setIsPremium(userDoc.data().isPremium || false);
-        }
-      }
-    }
-    checkSubscription();
-  }, [user]);
 
   const selectedSex = patientProfile.sex;
   const selectedLocations = form.watch('symptoms.location') || [];
@@ -137,8 +138,8 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
 
   const handleNext = async (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
 
-    // Only trigger validation for the fields in the CURRENT step
     const fieldsForStep: FieldPath<FormValues>[][] = [
       ['symptoms.location'],
       ['symptoms.type'],
@@ -152,7 +153,6 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
       ],
     ];
 
-    // Validate only current step fields before moving forward
     const isValid = await form.trigger(fieldsForStep[currentStep], { shouldFocus: true });
     if (isValid) {
       setCurrentStep((prev) => prev + 1);
@@ -162,9 +162,13 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
 
   const handlePrev = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setIsLoading(true);
+      window.location.assign('/profiles');
     }
   };
 
@@ -568,21 +572,25 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
           </Card>
         )}
 
-        <div className="mt-8 flex items-center justify-between">
-          <div className="w-[100px]">
-            {/* The Previous/Back button you wanted simplified */}
-            {currentStep > 0 && (
-              <Button type="button" variant="outline" onClick={handlePrev}>
-                {t('previous')}
-              </Button>
-            )}
+        <div className="mt-8 flex items-center justify-between gap-4">
+          <div className="w-[120px]">
+            <Button type="button" variant="outline" onClick={handlePrev} className="w-full gap-2">
+              {currentStep > 0 ? (
+                t('previous')
+              ) : (
+                <>
+                  <ArrowLeft className="h-4 w-4" />
+                  {t('profiles', 'Profiles')}
+                </>
+              )}
+            </Button>
           </div>
           {currentStep < totalSteps - 1 ? (
-            <Button type="button" onClick={handleNext}>
+            <Button type="button" onClick={handleNext} className="w-[120px]">
               {t('next')}
             </Button>
           ) : (
-            <Button type="submit" disabled={isLoading || !form.formState.isValid || isUploading}>
+            <Button type="submit" className="flex-grow" disabled={isLoading || !form.formState.isValid || isUploading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('analyzing')}

@@ -4,13 +4,30 @@ declare global {
   interface Window {
     /**
      * Interface exposed by Android WebView via MainActivity.
-     * Ensure your Android code adds this JavascriptInterface.
      */
     AndroidBilling?: {
+      /**
+       * Triggers the purchase flow for a product.
+       * @param productId The ID of the product (formerly SKU)
+       */
+      launchPurchaseFlow: (productId: string) => void;
+
+      /**
+       * (Optional) Fetch current price from Google Play.
+       * If you implement this on Android, you can show localized prices.
+       */
+      queryProductDetails?: (productId: string) => void;
+
+      /**
+       * Legacy method - you should migrate to launchPurchaseFlow
+       */
       upgradeToPremium: () => void;
-      // Add other methods here if you expose them in Android
-      // showToast?: (msg: string) => void;
     };
+
+    /**
+     * Callback triggered by Android with localized product info.
+     */
+    onProductDetailsReceived?: (detailsJson: string) => void;
 
     /**
      * Callback triggered by Android when a purchase is successful.
