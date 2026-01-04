@@ -28,6 +28,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { setIsLoading: setGlobalLoading } = useLoading();
   const { t } = useTranslation();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Helper function to map Firebase error codes to translated strings
   const getErrorMessage = (errorCode: string) => {
@@ -129,7 +134,7 @@ export default function LoginPage() {
     setError(null);
   };
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

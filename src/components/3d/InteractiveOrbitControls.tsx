@@ -15,31 +15,49 @@ export const InteractiveOrbitControls: React.FC<InteractiveOrbitControlsProps> =
   const controlsRef = useRef<any>();
   const { camera } = useThree();
 
+  const prevDistanceRef = useRef<number | null>(null);
+  const prevTargetRef = useRef<string>('');
+
   useEffect(() => {
     if (controlsRef.current && initialCameraDistance !== null) {
-      controlsRef.current.minDistance = initialCameraDistance * 0.4;
-      controlsRef.current.maxDistance = initialCameraDistance * 1.5;
-
-      // Reset camera position to look at target from a good distance if it's the first load
       const targetVec = new Vector3(...target);
-      const direction = new Vector3(0, 0, 1).applyQuaternion(camera.quaternion);
-      camera.position.copy(targetVec).add(direction.multiplyScalar(initialCameraDistance));
+      const targetStr = target.join(',');
 
-      controlsRef.current.target.copy(targetVec);
-      controlsRef.current.update();
+      if (prevDistanceRef.current !== initialCameraDistance || prevTargetRef.current !== targetStr) {
+        const direction = new Vector3().subVectors(camera.position, targetVec).normalize();
+
+        if (direction.lengthSq() < 0.0001) {
+          direction.set(0, 0, 1);
+        }
+
+        camera.position.copy(targetVec).add(direction.multiplyScalar(initialCameraDistance));
+        controlsRef.current.target.copy(targetVec);
+
+        // Ensure valid constraints
+        const minDist = Math.min(0.2, initialCameraDistance * 0.5);
+
+        controlsRef.current.minDistance = minDist;
+        controlsRef.current.maxDistance = initialCameraDistance;
+
+        controlsRef.current.update();
+
+        prevDistanceRef.current = initialCameraDistance;
+        prevTargetRef.current = targetStr;
+      }
     }
-  }, [initialCameraDistance, target, camera]);
+  }, [initialCameraDistance, target[0], target[1], target[2], camera]);
 
   return (
     <OrbitControls
       ref={controlsRef}
-      enablePan={false} // Disable panning to keep model centered
+      enablePan={true}
+      panSpeed={1.5}
       enableZoom={true}
       makeDefault
       minPolarAngle={0}
       maxPolarAngle={Math.PI}
-      rotateSpeed={0.8}
-      zoomSpeed={1.2}
+      minDistance={0.1}
+      maxDistance={initialCameraDistance || 100}
     />
   );
 };

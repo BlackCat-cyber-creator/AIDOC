@@ -146,7 +146,7 @@ function ClientPageContent() {
                   {t('start_diagnosis')}: {patientProfile.name}
                 </CardTitle>
                 <CardDescription>
-                  {t(patientProfile.age)} • {patientProfile.sex}
+                  {t(patientProfile.age)} • {t(patientProfile.sex)}
                 </CardDescription>
               </div>
             </div>

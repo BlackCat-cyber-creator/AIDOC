@@ -35,6 +35,7 @@ import { useTranslation } from 'react-i18next';
 import imageCompression from 'browser-image-compression';
 import { MultiStepLoader } from '@/components/ui/multi-step-loader';
 import { symptomTypesByLanguage, regionIds3D, symptomTypeToLocationMapping } from '@/lib/symptoms-data';
+import { useRouter } from 'next/navigation';
 
 interface DiagnosisFormProps {
   form: UseFormReturn<FormValues>;
@@ -56,6 +57,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
   patientProfile,
 }: DiagnosisFormProps) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const [user] = useAuthState(auth);
   const [isPremium, setIsPremium] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
@@ -133,7 +135,9 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
     return currentSymptomTypes.filter((st) => displayableSymptomTypeValues.has(st.value));
   }, [selectedLocations, currentSymptomTypes]);
 
-  const handleNext = async () => {
+  const handleNext = async (e: React.MouseEvent) => {
+    e.preventDefault();
+
     // Only trigger validation for the fields in the CURRENT step
     const fieldsForStep: FieldPath<FormValues>[][] = [
       ['symptoms.location'],
@@ -156,7 +160,8 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
     }
   };
 
-  const handlePrev = () => {
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -565,6 +570,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
 
         <div className="mt-8 flex items-center justify-between">
           <div className="w-[100px]">
+            {/* The Previous/Back button you wanted simplified */}
             {currentStep > 0 && (
               <Button type="button" variant="outline" onClick={handlePrev}>
                 {t('previous')}

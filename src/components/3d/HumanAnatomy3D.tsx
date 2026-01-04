@@ -69,7 +69,6 @@ const AnatomyModel = React.memo(
     const { camera, size } = useThree();
     const mixer = useRef<AnimationMixer | null>(null);
 
-    // Use useMemo to clone the scene whenever gltfScene changes
     const clonedScene = useMemo(() => {
       const clone = gltfScene.clone();
       clone.position.y -= 1;
@@ -111,7 +110,10 @@ const AnatomyModel = React.memo(
             distance = sizeVec.x / (2 * aspectRatio) / Math.tan(fovRad);
           }
 
-          distance *= 1.6;
+          // Adjusted the distance multiplier back to a more reasonable value.
+          // 0.1 was far too close, effectively putting the camera inside the model.
+          // 1.1 provides a good close-up view without clipping.
+          distance *= 1.3;
           onModelLoaded(center, distance);
         }
       }
@@ -177,7 +179,8 @@ export const HumanAnatomy3D = React.memo(
 
     return (
       <div className="w-full h-[45vh] min-h-[300px] max-h-[500px] md:h-[600px] flex items-center justify-center relative bg-muted/5 rounded-xl overflow-hidden border">
-        <Canvas camera={{ fov: 75, position: [0, 0, 5] }} dpr={[1, 2]} powerPreference="high-performance">
+        {/* Changed powerPreference to powerpreference (lowercase) to fix React warning, though in R3F 9+ it might just be valid prop on Canvas directly or on gl prop */}
+        <Canvas camera={{ fov: 75, position: [0, 0, 5] }} dpr={[1, 2]} gl={{ powerPreference: 'high-performance' }}>
           <ambientLight intensity={0.7} />
           <directionalLight position={[1, 2, 3]} intensity={0.8} />
           <pointLight position={[-2, 1, -2]} intensity={0.5} />
@@ -226,18 +229,31 @@ export const HumanAnatomy3D = React.memo(
                   key={part.id + '-label'}
                   position={[part.center[0], part.center[1] - 1.0, part.center[2]]}
                   center
-                  distanceFactor={6}
                   style={{ pointerEvents: 'none' }}
                 >
                   <div
                     className={cn(
-                      'transition-all duration-200 select-none px-2 py-0.5 rounded-full text-[10px] font-bold border whitespace-nowrap',
+                      'transition-all duration-200 select-none px-2 py-1 rounded-md whitespace-nowrap leading-none',
+                      // Increased font size here
+                      'text-[0.3rem] sm:text-[0.4rem] md:text-[0.5rem] font-semibold',
                       isSelected
-                        ? 'bg-blue-600 text-white border-blue-400 scale-110 shadow-lg shadow-blue-500/50'
-                        : 'bg-slate-800/80 text-slate-200 border-slate-600 opacity-60'
+                        ? 'bg-blue-600 text-white scale-110 shadow-lg'
+                        : 'bg-slate-800/80 text-slate-200 opacity-70'
                     )}
                   >
-                    {t(part.label)}
+                    <button
+                      className="w-full h-full focus:outline-none active:outline-none bg-transparent border-none p-0 outline-none ring-0 focus:ring-0 active:ring-0 select-none" // Removing default button styles and outline
+                      tabIndex={-1} // Remove from tab order to prevent focus ring
+                      style={{ pointerEvents: 'auto', cursor: 'pointer', outline: 'none' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault(); // Prevent default focus behavior
+                        handleLocationToggle(part.id);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()} // Prevent focus on click
+                    >
+                      {t(part.label)}
+                    </button>
                   </div>
                 </Html>
               );

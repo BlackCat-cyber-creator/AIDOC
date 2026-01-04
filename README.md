@@ -4,7 +4,7 @@
 
 ## Overview
 
-AIDOC is a state-of-the-art medical diagnosis assistant that leverages advanced Artificial Intelligence to help users understand their symptoms. By combining patient history, symptom details, and interactive 3D visualizations, AIDOC provides educational insights into potential health conditions.
+AIDOC is a state-of-the-art medical Health assistant that leverages advanced Artificial Intelligence to help users understand their symptoms. By combining patient history, symptom details, and interactive 3D visualizations, AIDOC provides educational insights into potential health conditions.
 
 **Disclaimer: AIDOC is for educational and informational purposes only. It is not a substitute for professional medical diagnosis. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.**
 

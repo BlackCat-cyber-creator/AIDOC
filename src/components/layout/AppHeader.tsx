@@ -19,13 +19,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useRouter, usePathname } from 'next/navigation'; // Import usePathname
+import { useRouter, usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
-import { useLoading } from '@/components/LoadingProvider'; // Import useLoading
+import { useLoading } from '@/components/LoadingProvider';
 
 const languages = [
   { code: 'en', name: 'English' },
@@ -38,11 +38,11 @@ export function AppHeader() {
   const isMobile = useIsMobile();
   const [user] = useAuthState(auth);
   const router = useRouter();
-  const pathname = usePathname(); // Get current pathname
+  const pathname = usePathname();
   const { i18n, t } = useTranslation();
   const [isPremium, setIsPremium] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { setIsLoading } = useLoading(); // Get setIsLoading from context
+  const { setIsLoading } = useLoading();
 
   useEffect(() => {
     setMounted(true);
@@ -61,7 +61,7 @@ export function AppHeader() {
   }, [user]);
 
   const handleLogout = async () => {
-    setIsLoading(true); // Set global loading to true
+    setIsLoading(true);
     await signOut(auth);
     router.push('/');
   };
@@ -72,13 +72,13 @@ export function AppHeader() {
 
   const handleNavigation = (path: string) => {
     if (pathname !== path) {
-      // Only set loading and navigate if changing pages
-      setIsLoading(true); // Set global loading to true before navigation
+      // router.push already handles navigation, we'll let the target page handle the loader if needed
+      // or we can keep it here but ensure target page clears it.
+      // Given the "forever" issue, let's remove it and see.
       router.push(path);
     }
   };
 
-  // Improved logic to find current language name, accounting for 'en-US', 'en-GB', etc.
   const currentLanguageName = languages.find((l) => i18n.language.startsWith(l.code))?.name || 'English';
 
   if (!mounted) {
@@ -98,7 +98,7 @@ export function AppHeader() {
         </h1>
         <div className="flex justify-center items-center h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-40 lg:w-40">
           <AppIcon3D
-            key={isMobile ? 'mobile-app-icon' : 'desktop-app-icon'} // Added key for remounting
+            key={isMobile ? 'mobile-app-icon' : 'desktop-app-icon'}
             modelPath="/models/app_icon.glb"
             scale={isMobile ? 0.5 : 0.8}
             position={isMobile ? [0, -0.5, 0] : [0, -0.7, 0]}
@@ -130,7 +130,7 @@ export function AppHeader() {
             <DropdownMenuItem
               onClick={() => handleNavigation('/billing')}
               className="cursor-pointer"
-              disabled={pathname === '/billing'} // Disable if already on billing page
+              disabled={pathname === '/billing'}
             >
               <CreditCard className="mr-2 h-4 w-4" />
               <span>{t('subscription')}</span>
@@ -166,7 +166,7 @@ export function AppHeader() {
             <DropdownMenuItem
               onClick={() => handleNavigation('/profiles')}
               className="cursor-pointer"
-              disabled={pathname === '/profiles'} // Disable if already on profiles page
+              disabled={pathname === '/profiles'}
             >
               <User className="mr-2 h-4 w-4" />
               <span>{t('profiles_title')}</span>
