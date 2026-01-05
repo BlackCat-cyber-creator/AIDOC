@@ -4,6 +4,11 @@ import withPWA from 'next-pwa';
 
 const nextConfig: NextConfig = {
   // output: 'export', // Enabled for static export if needed for Capacitor
+  reactStrictMode: true,
+  poweredByHeader: false, // Security & slight performance boost
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false, // Clean up console logs in prod
+  },
   images: {
     remotePatterns: [
       {
@@ -12,8 +17,19 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      // Allow Firebase Storage images
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
-    unoptimized: true,
+    // unoptimized: true, // Keep unoptimized true for static exports/Capacitor, but for Vercel/Web hosting, false is better.
+    // If you are serving this via Vercel for the WebView, set to FALSE to get automatic optimization.
+    // If you are bundling the whole app inside the APK (static export), keep TRUE.
+    // Assuming standard web hosting for WebView:
+    unoptimized: false,
   },
   typescript: {
     ignoreBuildErrors: true,
@@ -23,11 +39,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-// For a WebView mobile app, PWA service workers often cause "SyntaxError" and cache stalls.
-// Disabling it ensures the WebView always gets the latest content from the server without local cache conflicts.
+// PWA Config
 const configWithPWA = withPWA({
   dest: 'public',
-  disable: true, // Set to true to fix WebView cache corruption and Workbox errors
+  disable: process.env.NODE_ENV === 'development', // Disable in dev, enable in prod
+  register: true,
+  skipWaiting: true, // Updates PWA immediately
 })(nextConfig as any);
 
 const configWithBundleAnalyzer = withBundleAnalyzer({

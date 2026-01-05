@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LoaderTwo } from '@/components/ui/loader'; // Assuming LoaderTwo is in ui/loader
+import { Loader2 } from 'lucide-react';
 
 interface LoadingContextType {
   isLoading: boolean;
@@ -32,7 +32,7 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-black/80 backdrop-blur-sm"
           >
-            <LoaderTwo />
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
           </motion.div>
         )}
       </AnimatePresence>

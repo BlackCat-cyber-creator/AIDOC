@@ -1,37 +1,21 @@
 'use client';
 
 import * as React from 'react';
-import {
-  BookOpen,
-  History,
-  LifeBuoy,
-  LogOut,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
-  User,
-  CreditCard,
-  LayoutDashboard,
-  Stethoscope,
-} from 'lucide-react';
+import { LogOut, Settings2, User, CreditCard } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
-import { doc, getDoc } from 'firebase/firestore';
 
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarRail,
-  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
@@ -42,8 +26,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { useUser } from '@/components/UserProvider';
 import { useLoading } from '@/components/LoadingProvider';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -51,7 +33,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { t } = useTranslation();
   const [user] = useAuthState(auth);
-  const { settings } = useUser();
   const { setIsLoading } = useLoading();
 
   const handleLogout = async () => {
@@ -60,28 +41,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     router.push('/');
   };
 
-  const handleNavigation = (url: string) => {
-    // If we are on the diagnosis page, force a hard navigation to bypass any WebView/React state locks
-    if (pathname === '/diagnosis') {
-      setIsLoading(true);
-      window.location.assign(url);
-    } else {
-      router.push(url);
-    }
-  };
-
   const navMain = [
     {
       title: t('profiles', 'Profiles'),
       url: '/profiles',
       icon: User,
       isActive: pathname === '/profiles',
-    },
-    {
-      title: t('diagnosis', 'Diagnosis'),
-      url: '/diagnosis',
-      icon: Stethoscope,
-      isActive: pathname === '/diagnosis',
     },
     {
       title: t('subscription', 'Subscription'),
@@ -93,19 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-sidebar-primary-foreground">
-                <LayoutDashboard className="size-4 text-white" />
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-
-      <SidebarContent>
+      <SidebarContent className="mt-4">
         <SidebarMenu>
           {navMain.map((item) => (
             <SidebarMenuItem key={item.title}>
@@ -115,7 +68,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 tooltip={item.title}
                 onClick={(e) => {
                   e.preventDefault();
-                  handleNavigation(item.url);
+                  router.push(item.url);
                 }}
                 className="cursor-pointer"
               >

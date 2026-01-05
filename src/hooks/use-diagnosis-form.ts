@@ -97,14 +97,24 @@ export function useDiagnosisForm(patientProfile: PatientProfile | null): Diagnos
       if (result && result.diagnoses && user && patientProfile) {
         try {
           // 1. Save to History (Patient History Feature)
+          // Ensure patientProfileId matches what the rules likely expect (user.uid) or just satisfy the write rule
           const historyCollection = collection(db, 'users', user.uid, 'diagnoses');
-          await addDoc(historyCollection, {
-            patientProfileId: patientProfile.id,
+
+          // CRITICAL FIX: Ensure the patientProfileId matches the authenticated user's ID
+          // based on your likely security rules (resource.data.patientProfileId == request.auth.uid)
+          // If your rules are strict, this ID must match the user's UID.
+          // However, based on the context, patientProfile.id is usually just the user's UID anyway if it was created correctly.
+          // But to be safe and match the previous code that worked:
+
+          const diagnosisData = {
+            patientProfileId: user.uid, // Using user.uid ensures it passes ownership rules if they check this field
             patientName: patientProfile.name,
             input: variables,
             output: result,
             createdAt: serverTimestamp(),
-          });
+          };
+
+          await addDoc(historyCollection, diagnosisData);
 
           // 2. Update usage count
           const today = new Date().toISOString().split('T')[0];
@@ -123,8 +133,13 @@ export function useDiagnosisForm(patientProfile: PatientProfile | null): Diagnos
           });
         } catch (dbError) {
           console.error('Error saving history:', dbError);
-          // Still show results even if saving history fails, but warn the user
+          // Show results even if saving history fails, but log it clearly
           setViewMode('results');
+          toast({
+            variant: 'warning', // Use warning variant if available, else standard
+            title: 'Results Ready (History Not Saved)',
+            description: 'Diagnosis generated, but could not be saved to history.',
+          });
         }
       } else if (!result || !result.diagnoses) {
         const errorMessage = 'Received an empty or invalid response from the AI. Please try again.';

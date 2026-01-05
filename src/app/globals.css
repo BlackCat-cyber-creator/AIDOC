@@ -131,9 +131,7 @@
     /* Ensure buttons feel responsive */
     touch-action: manipulation;
   }
-  .card,
-  .shadow-lg,
-  .rounded-lg {
+  .card {
     @apply transition-shadow duration-200 hover:shadow-xl hover:scale-[1.02];
   }
   input,

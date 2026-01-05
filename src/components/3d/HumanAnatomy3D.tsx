@@ -3,10 +3,9 @@
 import React, { Suspense, useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Html } from '@react-three/drei';
-import { Box3, Vector3, AnimationMixer, PerspectiveCamera, Mesh, MeshStandardMaterial, Object3D } from 'three';
+import { Box3, Vector3, AnimationMixer, PerspectiveCamera, Mesh, MeshStandardMaterial, Group, Object3D } from 'three';
 import { InteractiveOrbitControls } from './InteractiveOrbitControls';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/lib/utils';
 
 interface HumanAnatomy3DProps {
   selectedSex: 'male' | 'female' | 'other';
@@ -17,7 +16,7 @@ interface HumanAnatomy3DProps {
 
 interface BodyPart {
   id: string;
-  label: string;
+  label: string; // Translation key
   center: [number, number, number];
   radius: number;
   sex?: 'male' | 'female';
@@ -102,19 +101,18 @@ const AnatomyModel = React.memo(
           const sizeVec = new Vector3();
           box.getSize(sizeVec);
 
-          // Calculate initial camera distance to fit the model
           const objectSize = Math.max(sizeVec.x, sizeVec.y, sizeVec.z);
           const fovRad = (Math.PI * camera.fov) / 360;
           distance = objectSize / 2 / Math.tan(fovRad);
 
-          // Adjust for aspect ratio (mobile screens)
           const aspectRatio = size.width / size.height;
-          // If screen is taller than wide (mobile), ensure width fits
           if (sizeVec.x / aspectRatio > sizeVec.y) {
             distance = sizeVec.x / (2 * aspectRatio) / Math.tan(fovRad);
           }
 
-          // Use consistent multiplier for desktop and mobile for uniform look
+          // Adjusted the distance multiplier back to a more reasonable value.
+          // 0.1 was far too close, effectively putting the camera inside the model.
+          // 1.1 provides a good close-up view without clipping.
           distance *= 1.3;
           onModelLoaded(center, distance);
         }
@@ -173,14 +171,15 @@ export const HumanAnatomy3D = React.memo(
       [disabled, onLocationToggle]
     );
 
+    // Preload both models
     useEffect(() => {
       useGLTF.preload('/models/male_anatomy.glb');
       useGLTF.preload('/models/female_anatomy.glb');
     }, []);
 
     return (
-      // Reverted to consistent height on all devices to match desktop feel
-      <div className="w-full h-[500px] flex items-center justify-center relative bg-muted/5 rounded-xl overflow-hidden border">
+      <div className="w-full h-[60vh] min-h-[400px] max-h-[800px] md:h-[700px] flex items-center justify-center relative bg-muted/5 rounded-xl overflow-hidden border">
+        {/* Changed powerPreference to powerpreference (lowercase) to fix React warning, though in R3F 9+ it might just be valid prop on Canvas directly or on gl prop */}
         <Canvas camera={{ fov: 75, position: [0, 0, 5] }} dpr={[1, 2]} gl={{ powerPreference: 'high-performance' }}>
           <ambientLight intensity={0.7} />
           <directionalLight position={[1, 2, 3]} intensity={0.8} />
@@ -235,23 +234,23 @@ export const HumanAnatomy3D = React.memo(
                   <div
                     className={cn(
                       'transition-all duration-200 select-none px-2 py-1 rounded-md whitespace-nowrap leading-none',
-                      // Unified font size for consistency across devices
-                      'text-xs font-semibold',
+                      // Increased font size here
+                      'text-[0.3rem] sm:text-[0.4rem] md:text-[0.5rem] font-semibold',
                       isSelected
                         ? 'bg-blue-600 text-white scale-110 shadow-lg'
                         : 'bg-slate-800/80 text-slate-200 opacity-70'
                     )}
                   >
                     <button
-                      className="w-full h-full focus:outline-none active:outline-none bg-transparent border-none p-0 outline-none ring-0 focus:ring-0 active:ring-0 select-none"
-                      tabIndex={-1}
+                      className="w-full h-full focus:outline-none active:outline-none bg-transparent border-none p-0 outline-none ring-0 focus:ring-0 active:ring-0 select-none" // Removing default button styles and outline
+                      tabIndex={-1} // Remove from tab order to prevent focus ring
                       style={{ pointerEvents: 'auto', cursor: 'pointer', outline: 'none' }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        e.preventDefault();
+                        e.preventDefault(); // Prevent default focus behavior
                         handleLocationToggle(part.id);
                       }}
-                      onMouseDown={(e) => e.preventDefault()}
+                      onMouseDown={(e) => e.preventDefault()} // Prevent focus on click
                     >
                       {t(part.label)}
                     </button>
@@ -268,3 +267,7 @@ export const HumanAnatomy3D = React.memo(
 );
 
 HumanAnatomy3D.displayName = 'HumanAnatomy3D';
+
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
+}

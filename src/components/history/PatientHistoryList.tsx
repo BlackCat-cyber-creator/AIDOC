@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { db, auth } from '@/lib/firebase';
+import { collection, query, orderBy, getDocs, limit } from 'firebase/firestore';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, User, ChevronRight, Calendar, Stethoscope, AlertTriangle, Info } from 'lucide-react';
+import { Clock, User, ChevronRight, Calendar, Stethoscope, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
@@ -14,8 +17,6 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { DiagnosisCard } from '../diagnosis/DiagnosisCard';
 import { Accordion } from '@/components/ui/accordion';
-import { useFirestore } from '@/hooks/db/useFirestore';
-import { orderBy, limit } from 'firebase/firestore';
 
 interface DiagnosisHistoryItem {
   id: string;
@@ -50,32 +51,60 @@ interface DiagnosisHistoryItem {
   };
 }
 
+const UrgencyConfig: Record<string, { label: string; Icon: any; className: string; dotColor: string }> = {
+  urgent: {
+    label: 'Urgent',
+    Icon: AlertTriangle,
+    className: 'bg-destructive/20 text-destructive border-destructive/50 hover:bg-destructive/30',
+    dotColor: 'bg-destructive',
+  },
+  'non-urgent': {
+    label: 'Non-Urgent',
+    Icon: Info,
+    className: 'bg-yellow-500/20 text-yellow-700 border-yellow-500/50 hover:bg-yellow-500/30',
+    dotColor: 'bg-yellow-600',
+  },
+  'self-care': {
+    label: 'Self-Care',
+    Icon: CheckCircle2,
+    className: 'bg-green-500/20 text-green-700 border-green-500/50 hover:bg-green-500/30',
+    dotColor: 'bg-green-600',
+  },
+};
+
 export function PatientHistoryList() {
+  const [user] = useAuthState(auth);
   const { t } = useTranslation();
+  const [history, setHistory] = useState<DiagnosisHistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<DiagnosisHistoryItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  const { data: history, loading } = useFirestore<DiagnosisHistoryItem>('diagnoses', [
-    orderBy('createdAt', 'desc'),
-    limit(20),
-  ]);
+  useEffect(() => {
+    async function fetchHistory() {
+      if (!user) return;
+      try {
+        const historyRef = collection(db, 'users', user.uid, 'diagnoses');
+        const q = query(historyRef, orderBy('createdAt', 'desc'), limit(20));
+        const querySnapshot = await getDocs(q);
+        const items = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as DiagnosisHistoryItem[];
+        setHistory(items);
+      } catch (error) {
+        console.error('Error fetching history:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchHistory();
+  }, [user]);
 
   const handleItemClick = (item: DiagnosisHistoryItem) => {
     setSelectedItem(item);
     setIsDetailOpen(true);
-  };
-
-  const getUrgencyStyles = (urgency: string | undefined) => {
-    switch (urgency) {
-      case 'urgent':
-        return 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200';
-      case 'non-urgent':
-        return 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200';
-      case 'self-care':
-        return 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200';
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200';
-    }
   };
 
   if (loading) {
@@ -108,7 +137,8 @@ export function PatientHistoryList() {
         <div className="grid gap-3">
           {history.map((item) => {
             const primaryDiagnosis = item.output?.diagnoses?.[0];
-            const urgency = primaryDiagnosis?.urgency;
+            const urgency = primaryDiagnosis?.urgency || 'self-care';
+            const config = UrgencyConfig[urgency];
 
             return (
               <Card
@@ -125,27 +155,26 @@ export function PatientHistoryList() {
                         </div>
                         <span className="font-semibold text-sm text-foreground/80">{item.patientName}</span>
                       </div>
-                      <h4 className="font-bold text-lg text-foreground leading-tight">
+                      <h4 className="font-bold text-base text-foreground leading-tight group-hover:text-primary transition-colors">
                         {primaryDiagnosis?.condition || 'Unknown Condition'}
                       </h4>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Calendar className="h-3 w-3" />
-                        {item.createdAt?.toDate ? format(item.createdAt.toDate(), 'PPP p') : 'Just now'}
+                        {item.createdAt?.toDate ? format(item.createdAt.toDate(), 'PPP p') : 'Recently'}
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-3">
                       <Badge
                         variant="outline"
                         className={cn(
-                          'capitalize text-[10px] px-2 py-0.5 shadow-sm border font-bold',
-                          getUrgencyStyles(urgency)
+                          'capitalize text-[10px] px-2 py-0.5 shadow-none font-medium flex items-center gap-1',
+                          config.className
                         )}
                       >
-                        {urgency || 'Unknown'}
+                        <config.Icon className="h-3 w-3" />
+                        {t(urgency)}
                       </Badge>
-                      <div className="h-8 w-8 rounded-full bg-muted/30 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-white" />
-                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
                   </div>
                 </CardContent>
@@ -170,8 +199,7 @@ export function PatientHistoryList() {
           <ScrollArea className="flex-grow p-6 pt-2">
             {selectedItem && (
               <div className="space-y-8 pb-10">
-                {/* Patient Summary Card */}
-                <Card className="bg-primary/5 border-primary/10 shadow-sm">
+                <Card className="bg-primary/5 border-primary/10">
                   <CardContent className="p-4 grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
@@ -190,31 +218,26 @@ export function PatientHistoryList() {
                   </CardContent>
                 </Card>
 
-                {/* Symptom Context */}
                 <div className="space-y-4">
                   <h5 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
-                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
                     {t('reported_symptoms', 'Reported Symptoms')}
                   </h5>
 
                   <div className="grid grid-cols-2 gap-4 bg-muted/30 rounded-xl p-4 border border-border/50">
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <p className="text-[10px] text-muted-foreground uppercase font-bold">
                         {t('location', 'Location')}
                       </p>
                       <div className="flex flex-wrap gap-1">
                         {selectedItem.input?.symptoms?.location?.map((loc) => (
-                          <Badge
-                            key={loc}
-                            variant="outline"
-                            className="text-[10px] bg-background shadow-sm border-border"
-                          >
+                          <Badge key={loc} variant="outline" className="text-[10px] bg-background">
                             {t(loc)}
                           </Badge>
                         )) || <span className="text-xs text-muted-foreground">-</span>}
                       </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <p className="text-[10px] text-muted-foreground uppercase font-bold">
                         {t('severity', 'Severity')}
                       </p>
@@ -239,26 +262,17 @@ export function PatientHistoryList() {
 
                   {selectedItem.input?.symptoms?.symptomImageUrl && (
                     <div className="rounded-xl overflow-hidden border shadow-sm group">
-                      <div className="relative">
-                        <img
-                          src={selectedItem.input.symptoms.symptomImageUrl}
-                          alt="Symptom"
-                          className="w-full h-auto object-cover max-h-60 transition-transform group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60" />
-                        <div className="absolute bottom-2 left-3">
-                          <span className="text-[10px] text-white/90 font-medium px-2 py-1 bg-black/40 rounded-full backdrop-blur-sm">
-                            Uploaded Image
-                          </span>
-                        </div>
-                      </div>
+                      <img
+                        src={selectedItem.input.symptoms.symptomImageUrl}
+                        alt="Symptom"
+                        className="w-full h-auto object-cover max-h-60"
+                      />
                     </div>
                   )}
                 </div>
 
                 <Separator />
 
-                {/* Consistent Diagnosis List Style */}
                 <div className="space-y-4">
                   <h5 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wider text-primary">
                     <Info className="h-4 w-4" />
@@ -274,7 +288,6 @@ export function PatientHistoryList() {
                   </Accordion>
                 </div>
 
-                {/* Disclaimer consistent with medical apps */}
                 <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex gap-3">
                   <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-[10px] text-amber-800 leading-relaxed italic">
@@ -288,7 +301,7 @@ export function PatientHistoryList() {
             )}
           </ScrollArea>
 
-          <div className="p-6 border-t mt-auto bg-background shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <div className="p-6 border-t mt-auto bg-background shrink-0">
             <Button className="w-full h-12 text-base font-bold shadow-lg" onClick={() => setIsDetailOpen(false)}>
               {t('close', 'Back to History')}
             </Button>

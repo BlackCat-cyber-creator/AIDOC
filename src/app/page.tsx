@@ -163,8 +163,7 @@ export default function LoginPage() {
 
       {/* Left Side - Hero / Branding (Hidden on mobile) */}
       <div className="hidden lg:flex w-1/2 relative z-10 flex-col justify-center items-center p-12 text-center h-screen sticky top-0">
-        <div className="relative w-48 h-48 mb-8 animate-in zoom-in duration-700">
-          <img src="/models/app_icon.glb" alt="" className="hidden" />
+        <div className="relative w-48 h-48 mb-8">
           <img src="/icon-512x512.png" alt="AIDOC" className="w-full h-full object-contain drop-shadow-2xl" />
         </div>
         <h1 className="text-6xl font-black tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
@@ -203,7 +202,7 @@ export default function LoginPage() {
                 </TabsTrigger>
               </TabsList>
 
-              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="">
                 {error && (
                   <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium flex items-center gap-2">
                     <Sparkles className="h-4 w-4" /> {error}

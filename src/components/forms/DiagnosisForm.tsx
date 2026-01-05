@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import dynamic from 'next/dynamic'; // Added for Lazy Loading
 import type { UseFormReturn, FieldPath } from 'react-hook-form';
 import {
   Form as FormProviderComponent,
@@ -16,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import type { FormValues, PatientProfile } from '@/lib/schema';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
   Loader2,
@@ -43,7 +44,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { HumanAnatomy3D } from '@/components/3d/HumanAnatomy3D';
+// import { HumanAnatomy3D } from '@/components/3d/HumanAnatomy3D'; // Removed static import
 import { auth, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -53,6 +54,20 @@ import { MultiStepLoader } from '@/components/ui/multi-step-loader';
 import { symptomTypesByLanguage, symptomTypeToLocationMapping } from '@/lib/symptoms-data';
 import { useUser } from '@/components/UserProvider';
 import { useLoading } from '@/components/LoadingProvider';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy load the heavy 3D component
+const HumanAnatomy3D = dynamic(() => import('@/components/3d/HumanAnatomy3D').then((mod) => mod.HumanAnatomy3D), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[500px] flex items-center justify-center bg-muted/10 rounded-2xl animate-pulse">
+      <div className="flex flex-col items-center gap-4">
+        <Activity className="h-10 w-10 text-muted-foreground/50 animate-bounce" />
+        <p className="text-sm text-muted-foreground font-medium">Loading 3D Model...</p>
+      </div>
+    </div>
+  ),
+});
 
 interface DiagnosisFormProps {
   form: UseFormReturn<FormValues>;
@@ -395,8 +410,6 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                   </FormItem>
                 )}
               />
-
-              {/* Quick suggestion chips based on selected location could go here in future */}
             </div>
           )}
 
@@ -602,10 +615,9 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                     <FormItem>
                       <FormControl>
                         <div className="relative">
-                          <Activity className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
                           <Input
                             placeholder={t('radiation_placeholder', 'Does the pain move anywhere?')}
-                            className="pl-10 h-12 rounded-xl bg-card"
+                            className="h-12 rounded-xl bg-card"
                             {...field}
                           />
                         </div>
@@ -621,10 +633,9 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                     <FormItem>
                       <FormControl>
                         <div className="relative">
-                          <AlertCircle className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
                           <Textarea
                             placeholder={t('triggers_placeholder', 'What makes it worse? (e.g. food, stress)')}
-                            className="pl-10 min-h-[80px] rounded-xl bg-card resize-none py-3"
+                            className="min-h-[80px] rounded-xl bg-card resize-none py-3"
                             value={field.value}
                             onChange={(e) => field.onChange(e.target.value)}
                           />
@@ -680,7 +691,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
           ) : (
             <Button
               type="submit"
-              className="flex-1 h-14 rounded-full text-lg font-bold shadow-lg shadow-primary/25 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-primary transition-all duration-500"
+              className="flex-1 h-14 rounded-full text-lg font-bold shadow-lg shadow-primary/25"
               disabled={isLoading || !form.formState.isValid || isUploading}
             >
               {isLoading ? (
@@ -688,10 +699,7 @@ export const DiagnosisForm = React.memo(function DiagnosisForm({
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" /> {t('analyzing')}
                 </>
               ) : (
-                <>
-                  <Zap className="mr-2 h-5 w-5 fill-current" />
-                  {t('get_diagnosis')}
-                </>
+                <>{t('get_diagnosis')}</>
               )}
             </Button>
           )}
